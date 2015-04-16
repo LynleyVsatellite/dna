@@ -7,6 +7,11 @@ import dna.DNAFeature;
 import dna.DNAToken;
 import dna.Utils;
 
+/**
+ * Add the tokens as features. 
+ *
+ */
+
 public class WordDNAFeature extends DNAFeature {
 	
 	public static void main(String[] args) {
