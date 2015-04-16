@@ -8,7 +8,7 @@ import dna.DNAToken;
 import dna.Utils;
 
 /**
- * Add the tokens as features. 
+ * Add the tokens as features
  *
  */
 
