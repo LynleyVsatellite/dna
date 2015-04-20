@@ -57,8 +57,14 @@ public class Vocabulary {
 		vocab = readVocabularyFile();
 	}
 	
-	public Vocabulary(List<DNAToken> tokens) {
-		buildVocabularyFile(tokens);
+	/**
+	 * 
+	 * @param tokens the tokens of all the documents
+	 * @param trainTestValDocsIds a map with three keys "train", "test", "validate" that map
+	 * to sets. Each set contains the IDs of the documents that are used for training, testing, validation.
+	 */
+	public Vocabulary(List<DNAToken> tokens, Map<String, Set<Integer>> trainTestValDocsIds) {
+		buildVocabularyFile(tokens, trainTestValDocsIds);
 		vocab = readVocabularyFile();
 	}
 	
@@ -113,9 +119,19 @@ public class Vocabulary {
 		return vocab;
 	}
 
-	public static void buildVocabularyFile(List<DNAToken> tokens) {
+	/**
+	 * 
+	 * @param tokens the tokens of the documents
+	 * @param trainTestValDocsIds a map with three keys "train", "test", "validate" that map
+	 * to sets. Each set contains the IDs of the documents that are used for training, testing, validation.
+	 */
+	public static void buildVocabularyFile(List<DNAToken> tokens, Map<String, Set<Integer>> trainTestValDocsIds) {
 		Set<String> vocab = new LinkedHashSet<String>();
 		File file = new File("vocab.txt");
+		
+		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");
+		Set<Integer> testDocsIDs = trainTestValDocsIds.get("test");
+		Set<Integer> valDocsIDs = trainTestValDocsIds.get("validate");
 
 		if (!file.exists()) {
 			try {
@@ -125,7 +141,9 @@ public class Vocabulary {
 				BufferedWriter bw = new BufferedWriter(fw);
 
 				for (DNAToken tok : tokens) {
-					if( !vocab.contains( preprocess( tok.getText() ) ) ) {
+					if( !vocab.contains( preprocess( tok.getText() ) ) && 
+							!testDocsIDs.contains( tok.getDocId() ) && 
+							!valDocsIDs.contains( tok.getDocId() ) ) {
 						vocab.add( preprocess( tok.getText() ) );
 					}
 				}
