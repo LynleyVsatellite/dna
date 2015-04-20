@@ -12,8 +12,10 @@ public class DNAToken {
 	private String label;
 	private List<Double> features;
 	private int id;
-	//The ID of the document that this token belongs to.
+	//The ID of the document (from the database file) that this token belongs to.
 	private int docId;
+	//This id is used to identify documents when using many dna files, i.e. to avoid duplicates.
+	private int internalDocId;
 	
 	public DNAToken() {
 		features = new ArrayList<Double>();
@@ -71,6 +73,14 @@ public class DNAToken {
 
 	public void setDocId(int docId) {
 		this.docId = docId;
+	}
+
+	public int getInternalDocId() {
+		return internalDocId;
+	}
+
+	public void setInternalDocId(int internalDocId) {
+		this.internalDocId = internalDocId;
 	}
 	
 	
