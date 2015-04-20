@@ -7,14 +7,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 
 public class DNATextMiner {
 
 	public static void main(String[] args) {
 		String file = "/Users/rockyrock/Desktop/file.dna";
+		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
-		textMiner.exportToCSV(file, "Person");
+//		List<DNAToken> tokens = textMiner.getTokens(file, classLabel);
+//		Vocabulary.buildVocabularyFile(tokens); //It returns the IDs of documents for training, testsing, validation.
+//		textMiner.exportToCSV(file, classLabel); //It gets those documents IDs to label the tokens used for training and testing and validation.
 	}
 	
 	private DNATokenizer tokenzier;
@@ -28,22 +32,44 @@ public class DNATextMiner {
 	
 	/**
 	 * Exports data of the dna file into a CSV file to be used for training.
-	 * @param filePath the path to a dna file
+	 * @param files a list of paths to dna files.
 	 * @param classLabel the named entity that shall be used as a positive class for training. 
 	 * the value of this parameter is either "Person", "Organization" or "Concept".
 	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
 	 * will be given the positive class label, while the rest of the tokens will have the negative
 	 * class label.
+	 * @param trainSetSize the percentage of the documents to be used as training data.
+	 * @param testSetSize the percentage of the documents to be used as testing data.
+	 * @param validationSetSize the percentage of the documents to be used as validation data.
+	 * 
 	 */
-	public void exportToCSV(String filePath, String classLabel) {
-		extract_data(filePath, classLabel, true);
+	public void exportToCSV(List<String> files, String classLabel, 
+			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
+		
+		Random random = new Random(seed);
+		List<Integer> docsIds = new ArrayList<Integer>();
+		int internalDocId = 0;
+		
+		for ( String filePath : files ) {
+			DataAccess dataAccess = new DataAccess("sqlite", filePath );
+			List<Document> documentsList = dataAccess.getDocuments();
+			for (Document doc : documentsList) {
+				docsIds.add( internalDocId );
+				internalDocId++;
+			}
+			dataAccess.closeFile();
+		}
+		
+		
+		
+//		extract_data(files, classLabel);
 	}
 	
 	/**
-	 * Takes as input a dna file, then it tokenizes the text and assign a label for each token.
+	 * Takes as input a a list of paths to dna files, then it tokenizes the text of the documents and assign a label for each token.
 	 * Also the features of each token is generated.
 	 * 
-	 * @param filePath the path to a dna file
+	 * @param files a list of paths to dna files.
 	 * @param classLabel classLabel the named entity that shall be used as a positive class for training. 
 	 * the value of this parameter is either "Person", "Organization" or "Concept".
 	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
@@ -51,115 +77,120 @@ public class DNATextMiner {
 	 * class label.
 	 * @return a list that contains the tokens.
 	 */
-	public List<DNAToken> getTokens(String filePath, String classLabel) {
-		return extract_data(filePath, classLabel, false);
+	public List<DNAToken> getTokens(List<String> files, String classLabel) {
+		return extract_data(files, classLabel);
 	}
 	
 	/**
 	 * The method that does all the preprocessing for the dna file and generates the tokens 
 	 * and assign their labels.
 	 * 
-	 * @param filePath the path to a dna file
-	 * @param classLabel classLabel the named entity that shall be used as a positive class for training. 
+	 * @param files a list of paths to dna files.
+	 * @param classLabel the named entity that shall be used as a positive class for training. 
 	 * the value of this parameter is either "Person", "Organization" or "Concept".
 	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
 	 * will be given the positive class label, while the rest of the tokens will have the negative
 	 * class label.
-	 * @param exportToCSV to save the tokens to a CSV file or not.
 	 * @return a list that contains the tokens.
 	 */
-	private List<DNAToken> extract_data( String filePath, String classLabel, boolean exportToCSV ) {
+	private List<DNAToken> extract_data( List<String> files, String classLabel ) {
 		
-		DataAccess dataAccess = new DataAccess("sqlite", filePath );
-		List<Document> documentsList = dataAccess.getDocuments();
 		List<DNAToken> allTokens = new ArrayList<DNAToken>();
+		int internalDocId = 0;
 		
+		for ( String filePath : files ) {
 		
-		for (Document document : documentsList) {
-			List<DNAToken> docTokens = new ArrayList<DNAToken>();
-			List<SidebarStatement> statements = 
-					dataAccess.getStatementsPerDocumentId(document.getId());
+			DataAccess dataAccess = new DataAccess("sqlite", filePath );
+			List<Document> documentsList = dataAccess.getDocuments();
 			
-			HashMap<Integer, Integer> statements_positions = new HashMap<Integer, Integer>();
-			
-			String docString = document.getText();
-			
-			//Store statements start and end positions
-			for (SidebarStatement st : statements) {
-				if (st.getType().equals(classLabel)) {
-					
-					if ( !statements_positions.containsKey( st.getStart() ) ) {
-						statements_positions.put(st.getStart(), st.getStop());
-					}
-					else {
-						//Store the statement with the larger range
-						if ( statements_positions.get( st.getStart() ) < st.getStop() ) {
-							statements_positions.put( st.getStart(),  st.getStop());
+			for (Document document : documentsList) {
+				List<DNAToken> docTokens = new ArrayList<DNAToken>();
+				List<SidebarStatement> statements = 
+						dataAccess.getStatementsPerDocumentId(document.getId());
+				
+				HashMap<Integer, Integer> statements_positions = new HashMap<Integer, Integer>();
+				
+				String docString = document.getText();
+				
+				//Store statements start and end positions
+				for (SidebarStatement st : statements) {
+					if (st.getType().equals(classLabel)) {
+						
+						if ( !statements_positions.containsKey( st.getStart() ) ) {
+							statements_positions.put(st.getStart(), st.getStop());
+						}
+						else {
+							//Store the statement with the larger range
+							if ( statements_positions.get( st.getStart() ) < st.getStop() ) {
+								statements_positions.put( st.getStart(),  st.getStop());
+							}
 						}
 					}
 				}
-			}
-			
-			//Remove the short highlighted statements inside a larger statement,
-			//i.e. just select the wider statement to avoid redundant tokens.
-			statements_positions = removeInnerStatements( statements_positions );
-			
-			StringBuffer normalText = new StringBuffer();
-			StringBuffer statementText = new StringBuffer();
-			int normalTextStartPosition = 0;
-			//buffer statements and normal text and then tokenize them
-			for( int index = 0; index < docString.length(); index++ ) {
-				if ( statements_positions.containsKey(index) ) {
-					
-					//tokenize and flush the normal text and clear its buffer.
+				
+				//Remove the short highlighted statements inside a larger statement,
+				//i.e. just select the wider statement to avoid redundant tokens.
+				statements_positions = removeInnerStatements( statements_positions );
+				
+				StringBuffer normalText = new StringBuffer();
+				StringBuffer statementText = new StringBuffer();
+				int normalTextStartPosition = 0;
+				//buffer statements and normal text and then tokenize them
+				for( int index = 0; index < docString.length(); index++ ) {
+					if ( statements_positions.containsKey(index) ) {
+						
+						//tokenize and flush the normal text and clear its buffer.
+						List<DNAToken> temp_tokens = getTokenzier().tokenize(normalTextStartPosition,
+								normalText.toString());
+						temp_tokens = giveLabels(temp_tokens, "N");
+						docTokens.addAll( temp_tokens );
+						normalText = new StringBuffer();
+						
+						//tokenize and flush the statement text and then clear its buffer.
+						int start_pos = index;
+						int end_pos = statements_positions.get(start_pos);
+						index = end_pos-1;// update index to continue buffering normal text after statement
+						statementText.append( docString.substring( start_pos, end_pos ) );
+						
+						temp_tokens = getTokenzier().tokenize(start_pos, statementText.toString());
+						temp_tokens = giveLabels(temp_tokens, "P");
+						docTokens.addAll( temp_tokens );
+						statementText = new StringBuffer();
+						normalTextStartPosition = end_pos;
+					}
+					else {
+						normalText.append( docString.charAt(index) );
+					}
+				}
+				
+				if ( normalText.length() > 0 ) {
 					List<DNAToken> temp_tokens = getTokenzier().tokenize(normalTextStartPosition,
 							normalText.toString());
 					temp_tokens = giveLabels(temp_tokens, "N");
 					docTokens.addAll( temp_tokens );
 					normalText = new StringBuffer();
-					
-					//tokenize and flush the statement text and then clear its buffer.
-					int start_pos = index;
-					int end_pos = statements_positions.get(start_pos);
-					index = end_pos-1;// update index to continue buffering normal text after statement
-					statementText.append( docString.substring( start_pos, end_pos ) );
-					
-					temp_tokens = getTokenzier().tokenize(start_pos, statementText.toString());
-					temp_tokens = giveLabels(temp_tokens, "P");
-					docTokens.addAll( temp_tokens );
-					statementText = new StringBuffer();
-					normalTextStartPosition = end_pos;
 				}
-				else {
-					normalText.append( docString.charAt(index) );
+				
+				for ( int i = 0; i < docTokens.size(); i++ ) {
+					DNAToken tok = docTokens.get(i);
+					tok.setDocId( document.getId() );
+					tok.setInternalDocId(internalDocId);
+					tok.setId(i);
 				}
+				internalDocId++;
+				allTokens.addAll(docTokens);
+//				break;
 			}
 			
-			if ( normalText.length() > 0 ) {
-				List<DNAToken> temp_tokens = getTokenzier().tokenize(normalTextStartPosition,
-						normalText.toString());
-				temp_tokens = giveLabels(temp_tokens, "N");
-				docTokens.addAll( temp_tokens );
-				normalText = new StringBuffer();
-			}
+			dataAccess.closeFile();
 			
-			for ( int i = 0; i < docTokens.size(); i++ ) {
-				DNAToken tok = docTokens.get(i);
-				tok.setDocId( document.getId() );
-				tok.setId(i);
-			}
-			
-			allTokens.addAll(docTokens);
-//			break;
 		}
 		
-		dataAccess.closeFile();
-		
-		FeatureFactory featFact = new FeatureFactory(allTokens);
-		allTokens = featFact.addFeatures();
-		
-		if(exportToCSV)
-			toCSVFile(allTokens, featFact.getNumberOfFeatures(), filePath);
+//		FeatureFactory featFact = new FeatureFactory(allTokens);
+//		allTokens = featFact.addFeatures();
+//		
+//		if(exportToCSV)
+//			toCSVFile(allTokens, featFact.getNumberOfFeatures(), files.get(0));
 		
 		return allTokens;
 	}
@@ -266,7 +297,11 @@ public class DNATextMiner {
 		}
 	}
 	
-	private static void toCSVFile(List<DNAToken> tokens, int numberOfFeatures, String path) {
+	private static void toCSVFile(List<DNAToken> tokens, String path) {
+		FeatureFactory featFact = new FeatureFactory(tokens);
+		tokens = featFact.addFeatures();
+		int numberOfFeatures = featFact.getNumberOfFeatures();
+		
 		System.out.println("Saving as CSV file ...");
 		File oldFile = new File(path);
 		File csvFile = new File( oldFile.getAbsoluteFile() +  ".csv" );
