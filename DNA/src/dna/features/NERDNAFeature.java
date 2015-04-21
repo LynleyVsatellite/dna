@@ -122,6 +122,11 @@ public class NERDNAFeature extends DNAFeature {
 		return tokens;
 	}
 
+	@Override
+	public int numberOfFeatures() {
+		return NUMB_FEATURES;
+	}
+
 }
 
 

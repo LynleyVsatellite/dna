@@ -95,8 +95,8 @@ public class POSDNAFeature extends DNAFeature {
 			for ( int j = 0; j < tagsList.length; j++ ) {
 				if ( tokenTag.equals( tagsList[j] ) ) {
 					features[j] = 1;
-					System.out.println(tok.getText());
-					System.out.println(tagsList[j]);
+//					System.out.println(tok.getText());
+//					System.out.println(tagsList[j]);
 				}
 					
 			}
@@ -105,6 +105,11 @@ public class POSDNAFeature extends DNAFeature {
 		}
 		
 		return tokens;
+	}
+
+	@Override
+	public int numberOfFeatures() {
+		return tagsList.length;
 	}
 
 }

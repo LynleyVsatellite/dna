@@ -50,8 +50,13 @@ public class NGramDNAFeature extends DNAFeature {
 	
 	private Vocabulary vocab;
 	private Map<String, Integer> nGrams;
-	private final int n;
 	
+	private final int n;//the size of the gram
+	
+	/**
+	 * 
+	 * @param n the size of the gram
+	 */
 	public NGramDNAFeature(int n) {
 		vocab = new Vocabulary();
 		nGrams = new LinkedHashMap<String, Integer>();
@@ -121,6 +126,11 @@ public class NGramDNAFeature extends DNAFeature {
 	
 	public static String preprocess(String txt) {
 		return txt.toLowerCase();
+	}
+
+	@Override
+	public int numberOfFeatures() {
+		return nGrams.size();
 	}
 }
 

@@ -64,6 +64,11 @@ public class AllCapitalizedDNAFeature extends DNAFeature {
 		
 		return tokens;
 	}
+
+	@Override
+	public int numberOfFeatures() {
+		return 1;
+	}
 	
 	
 }

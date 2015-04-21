@@ -5,20 +5,31 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+
+import dna.features.Vocabulary;
 
 
 public class DNATextMiner {
 
 	public static void main(String[] args) {
-		String file = "/Users/rockyrock/Desktop/file.dna";
+		System.out.println( "Started..." );
+		String file1 = "/Users/rockyrock/Desktop/steffi.dna";
+		String file2 = "/Users/rockyrock/Desktop/okt.dna";
+		List<String> files = new ArrayList<String>();
+		files.add(file1);
+		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
-//		List<DNAToken> tokens = textMiner.getTokens(file, classLabel);
-//		Vocabulary.buildVocabularyFile(tokens); //It returns the IDs of documents for training, testsing, validation.
-//		textMiner.exportToCSV(file, classLabel); //It gets those documents IDs to label the tokens used for training and testing and validation.
+		textMiner.exportToCSV(files, classLabel, "trainset.csv", 0.5, 0.5, 0.0, 1);
+		System.out.println( new Date() );
 	}
 	
 	private DNATokenizer tokenzier;
@@ -38,12 +49,13 @@ public class DNATextMiner {
 	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
 	 * will be given the positive class label, while the rest of the tokens will have the negative
 	 * class label.
-	 * @param trainSetSize the percentage of the documents to be used as training data.
-	 * @param testSetSize the percentage of the documents to be used as testing data.
-	 * @param validationSetSize the percentage of the documents to be used as validation data.
+	 * @param path where to save the file
+	 * @param trainSetSize the percentage [0.0 , 1.0] of the documents to be used as training data.
+	 * @param testSetSize the percentage [0.0 , 1.0] of the documents to be used as testing data.
+	 * @param validationSetSize the percentage [0.0 , 1.0] of the documents to be used as validation data.
 	 * 
 	 */
-	public void exportToCSV(List<String> files, String classLabel, 
+	public void exportToCSV(List<String> files, String classLabel, String path,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
 		
 		Random random = new Random(seed);
@@ -60,9 +72,43 @@ public class DNATextMiner {
 			dataAccess.closeFile();
 		}
 		
+		//Sample some documents to be used as training, testing, validation.
+		int numbTrainDocs = (int) (docsIds.size() * trainSetSize);
+		int numbTestDocs  = (int) (docsIds.size() * testSetSize);
+		Set<Integer> trainingDocsIds = new HashSet<Integer>();
+		Set<Integer> testingDocsIds = new HashSet<Integer>();
+		Set<Integer> validationDocsIds = new HashSet<Integer>();
+		Collections.shuffle(docsIds, random);
 		
+		for( int i = 0; i < numbTrainDocs; i++ ) {
+			trainingDocsIds.add( docsIds.get(i) );
+		}
 		
-//		extract_data(files, classLabel);
+		//In case we only want to use a training/testing split without a validation set.
+		if ( validationSetSize > 0.0 ) {
+			for( int i = 0; i < numbTestDocs; i++ ) {
+				int index = i + numbTrainDocs;
+				testingDocsIds.add( docsIds.get( index ) );
+			}
+			
+			for( int i = numbTrainDocs+numbTestDocs; i < docsIds.size(); i++ ) {
+				validationDocsIds.add( docsIds.get(i) );
+			}
+		}
+		else {
+			for( int i = numbTrainDocs; i < docsIds.size(); i++ ) {
+				testingDocsIds.add( docsIds.get( i ) );
+			}
+		}
+		
+		List<DNAToken> tokens = extract_data(files, classLabel);
+		Map<String, Set<Integer>> trainTestValDocsIds = new HashMap<String, Set<Integer>>();
+		trainTestValDocsIds.put("train", trainingDocsIds);
+		trainTestValDocsIds.put("test", testingDocsIds);
+		trainTestValDocsIds.put("validate", validationDocsIds);
+		
+		Vocabulary.buildVocabularyFile(tokens, trainTestValDocsIds);
+		toCSVFile(tokens, trainTestValDocsIds, path);
 	}
 	
 	/**
@@ -97,6 +143,7 @@ public class DNATextMiner {
 		
 		List<DNAToken> allTokens = new ArrayList<DNAToken>();
 		int internalDocId = 0;
+		int counter = 0;
 		
 		for ( String filePath : files ) {
 		
@@ -179,11 +226,14 @@ public class DNATextMiner {
 				}
 				internalDocId++;
 				allTokens.addAll(docTokens);
-//				break;
+				
+				System.out.println( "Processed doc: " + counter );
+				counter++;
+//				if(counter == 2) break;
 			}
 			
 			dataAccess.closeFile();
-			
+//			break;
 		}
 		
 //		FeatureFactory featFact = new FeatureFactory(allTokens);
@@ -297,14 +347,28 @@ public class DNATextMiner {
 		}
 	}
 	
-	private static void toCSVFile(List<DNAToken> tokens, String path) {
+	/**
+	 * Exports the tokens of the documents into a CSV file that contains the features
+	 * for each token and its label to be used for machine learning algorithm.
+	 * @param tokens the tokens of the documents.
+	 * @param trainTestValDocsIds a map that contains 3 keys ("train", "test", "validate"). Each
+	 * key map to a set that contains the IDs of the documents that are used for training, testing, and validation.
+	 * @param path where to save the CSV file.
+	 */
+	private static void toCSVFile(List<DNAToken> tokens, 
+			Map<String, Set<Integer>> trainTestValDocsIds, String path) {
 		FeatureFactory featFact = new FeatureFactory(tokens);
 		tokens = featFact.addFeatures();
-		int numberOfFeatures = featFact.getNumberOfFeatures();
+		int numberOfFeatures = featFact.getTotalNumberOfFeatures();
+		
+		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");
+		Set<Integer> testDocsIDs = trainTestValDocsIds.get("test");
+		Set<Integer> valDocsIDs = trainTestValDocsIds.get("validate");
 		
 		System.out.println("Saving as CSV file ...");
-		File oldFile = new File(path);
-		File csvFile = new File( oldFile.getAbsoluteFile() +  ".csv" );
+//		File oldFile = new File(path);
+//		File csvFile = new File( oldFile.getAbsoluteFile() +  ".csv" );
+		File csvFile = new File( path );
 		System.out.println(csvFile.getAbsolutePath());
 		if (!csvFile.exists()) {
 			try {
@@ -315,24 +379,35 @@ public class DNATextMiner {
 				BufferedWriter bw = new BufferedWriter(fw);
 				
 				//Write header
-				bw.write("token,id,docId,start_position,end_position,");
+				bw.write("token,id,docId,internalDocId,start_position,end_position,");
 				
 				for (int i = 0; i < numberOfFeatures; i++) {
 					bw.write("f"+i+",");
 				}
 				
-				bw.write("label\n");
+				bw.write("label,dataset\n");
 				
 				for (DNAToken tok : tokens) {
-					bw.write(tok.getText() + "," + tok.getId() +
-							"," + tok.getDocId() + "," + tok.getStart_position() +
+					bw.write(tok.getText() + "," + tok.getId() + 
+							"," + tok.getDocId() + "," + tok.getInternalDocId() + "," + tok.getStart_position() +
 							"," + tok.getEnd_position() + ",");
+					
+					if (tok.getFeatures().size() != numberOfFeatures)
+						throw new RuntimeException("The token's feature vector size is different from the total number of features!");
 					
 					for (Double f : tok.getFeatures()) {
 						bw.write(f.toString() + ",");
 					}
 					
-					bw.write(tok.getLabel() + "\n");
+					bw.write(tok.getLabel() + ",");
+					
+					if( trainDocsIDs.contains( tok.getInternalDocId() ) )
+						bw.write("train" + "\n");
+					if( testDocsIDs.contains( tok.getInternalDocId() ) )
+						bw.write("test" + "\n");
+					if( valDocsIDs.contains( tok.getInternalDocId() ) )
+						bw.write("validate" + "\n");
+					
 				}
 				
 				bw.close();

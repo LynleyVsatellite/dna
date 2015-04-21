@@ -66,4 +66,9 @@ public class IsANumberDNAFeature extends DNAFeature {
 		return tokens;
 	}
 
+	@Override
+	public int numberOfFeatures() {
+		return 1;
+	}
+
 }

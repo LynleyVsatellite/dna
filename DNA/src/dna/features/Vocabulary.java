@@ -133,33 +133,34 @@ public class Vocabulary {
 		Set<Integer> testDocsIDs = trainTestValDocsIds.get("test");
 		Set<Integer> valDocsIDs = trainTestValDocsIds.get("validate");
 
-		if (!file.exists()) {
-			try {
-				System.out.println("Creating the vocabulary file.");
-				file.createNewFile();
-				FileWriter fw = new FileWriter(file);
-				BufferedWriter bw = new BufferedWriter(fw);
-
-				for (DNAToken tok : tokens) {
-					if( !vocab.contains( preprocess( tok.getText() ) ) && 
-							!testDocsIDs.contains( tok.getDocId() ) && 
-							!valDocsIDs.contains( tok.getDocId() ) ) {
-						vocab.add( preprocess( tok.getText() ) );
-					}
-				}
-
-				for (String tok : vocab) {
-					bw.write(tok + "\n");
-				}
-
-				bw.close();
-				System.out.println("Done.");
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			if (file.exists()) {
+				System.err.println( "Warning Vocabulary file exists and will be deleted and recreated!" );
+				file.delete();
 			}
+			
+			System.out.println("Creating the vocabulary file.");
+			file.createNewFile();
+			FileWriter fw = new FileWriter(file);
+			BufferedWriter bw = new BufferedWriter(fw);
+
+			for (DNAToken tok : tokens) {
+				if( !vocab.contains( preprocess( tok.getText() ) ) && 
+						!testDocsIDs.contains( tok.getInternalDocId() ) && 
+						!valDocsIDs.contains( tok.getInternalDocId() ) ) {
+					vocab.add( preprocess( tok.getText() ) );
+				}
+			}
+
+			for (String tok : vocab) {
+				bw.write(tok + "\n");
+			}
+
+			bw.close();
+			System.out.println("Done.");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		else {
-			System.err.println("Can't create a vocabulary file because it exists!");
-		}
+		
 	}
 }

@@ -77,4 +77,10 @@ public class WordDNAFeature extends DNAFeature {
 		return tokens;
 	}
 
+
+	@Override
+	public int numberOfFeatures() {
+		return vocab.getSize();
+	}
+
 }
