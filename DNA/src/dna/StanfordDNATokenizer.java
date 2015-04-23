@@ -16,15 +16,16 @@ public class StanfordDNATokenizer implements DNATokenizer {
 	@Override
 	public List<DNAToken> tokenize(int offset, String text) {
 		ArrayList<DNAToken> tokens = new ArrayList<DNAToken>();
-		
+		text = text.replace(" ", " ");//No this is NOT stupid, the first whitespace is NOT actually a whitespace.
 		StringReader reader = new StringReader(text);
 		PTBTokenizer ptbt = new PTBTokenizer(reader,
 				new CoreLabelTokenFactory(), "");
 		for (CoreLabel label; ptbt.hasNext(); ) {
 			label = (CoreLabel) ptbt.next();
-			
+			String labelTxt = label.toString();
+			labelTxt = labelTxt.replace(" ", "-");//This is only to replace that weird character with another 
 			DNAToken token = new DNAToken();
-			token.setText(label.toString());
+			token.setText(labelTxt);
 			token.setStart_position(offset + label.beginPosition());
 			token.setEnd_position(offset + label.endPosition());
 			
