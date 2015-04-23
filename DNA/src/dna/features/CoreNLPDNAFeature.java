@@ -54,13 +54,13 @@ public class CoreNLPDNAFeature extends DNAFeature {
 			DNAToken token = tokens.get(c);
 			//buffer the current document tokens so Stanford CoreNLP can be used
 			if ( token.getInternalDocId() == currentDocID && c != tokens.size()-1 ) {
-				docStringTokens.append( token.getText() + " " );
+				docStringTokens.append( token.getText() + "\n" );
 				docDNATokens.add(token);
 			}
 			else {
-//				System.out.println( "Flushing... " + currentDocID + ", new id: " + token.getInternalDocId() );
+				System.out.println( "Flushing... " + currentDocID + ", new id: " + token.getInternalDocId() );
 				if ( c == tokens.size()-1 ) {
-					docStringTokens.append( token.getText() + " " );
+					docStringTokens.append( token.getText() + "\n" );
 					docDNATokens.add(token);
 				}
 				//Tag the processed tokens with NER and POS tags and then empty the buffers and start with a new document
@@ -72,8 +72,10 @@ public class CoreNLPDNAFeature extends DNAFeature {
 			    else {
 			    	for(CoreMap sentence: sentences) {
 				    	List<CoreLabel> taggedTokens = sentence.get(TokensAnnotation.class);
-				    	if (taggedTokens.size() != docDNATokens.size()) 
+				    	if (taggedTokens.size() != docDNATokens.size())  {
+				    		System.err.println("Tagged: " + taggedTokens.size() + ", doc: " + docDNATokens.size());
 				    		throw new RuntimeException("The number of tagged tokens is different from the number of document tokens!");
+				    	}
 				    	else {
 				    		for ( int i = 0; i < taggedTokens.size(); i++ ) {
 				    			DNAToken docDNAToken = docDNATokens.get(i);
