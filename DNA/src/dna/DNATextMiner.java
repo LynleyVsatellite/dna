@@ -31,7 +31,7 @@ public class DNATextMiner {
 		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
-		textMiner.exportToCSV(files, classLabel, "trainset.csv", 1.0, 0.0, 0.0, 1);
+		textMiner.exportToCSV(files, classLabel, "trainset.csv", 0.6, 0.2, 0.2, 1);
 		System.out.println( new Date() );
 	}
 	
@@ -234,6 +234,9 @@ public class DNATextMiner {
 					tok.setInternalDocId(internalDocId);
 					tok.setId(i);
 				}
+//				if (internalDocId==127) {
+//					flushListToFile(docTokens);
+//				}
 				internalDocId++;
 				allTokens.addAll(docTokens);
 				
@@ -435,7 +438,7 @@ public class DNATextMiner {
 	}
 	
 	public static void flushToFile(String txt, Integer internalDocId) {
-		txt = txt.replace("\n", " ");
+//		txt = txt.replace("\n", " ");
 		try {
 			FileWriter fw = new FileWriter("temp/" + internalDocId.toString() + ".txt");
 			
@@ -463,6 +466,41 @@ public class DNATextMiner {
 			e.printStackTrace();
 		}
 		return bff.toString();
+	}
+	
+	public static void flushListToFile(List<DNAToken> list) {
+		StringBuffer bff = new StringBuffer();
+		try {
+			FileWriter fw = new FileWriter("temp/" + "list" + ".txt");
+			
+			BufferedWriter bw = new BufferedWriter(fw);
+			for (DNAToken x : list) {
+				bw.write(x.toString() + "\n");
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static List<String> readFlushedList() {
+		StringBuffer bff = new StringBuffer();
+		List<String> tokens = new ArrayList<String>();
+		try {
+			FileReader fr = new FileReader("temp/" + "list" + ".txt");
+			BufferedReader br = new BufferedReader(fr);
+			
+			String line = "";
+			while( (line = br.readLine()) != null ) {
+				tokens.add(line);
+			}
+			
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return tokens;
 	}
 	
 }
