@@ -83,6 +83,8 @@ public class DNAToken {
 		this.internalDocId = internalDocId;
 	}
 	
-	
+	public String toString() {
+		return getText();
+	}
 
 }
