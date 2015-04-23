@@ -1,7 +1,9 @@
 package dna;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public class DNATextMiner {
 
 	public static void main(String[] args) {
 		System.out.println( "Started..." );
+		System.out.println( new Date() );
 		String file1 = "/Users/rockyrock/Desktop/steffi.dna";
 		String file2 = "/Users/rockyrock/Desktop/okt.dna";
 		List<String> files = new ArrayList<String>();
@@ -28,17 +31,19 @@ public class DNATextMiner {
 		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
-		textMiner.exportToCSV(files, classLabel, "trainset.csv", 0.5, 0.5, 0.0, 1);
+		textMiner.exportToCSV(files, classLabel, "trainset.csv", 1.0, 0.0, 0.0, 1);
 		System.out.println( new Date() );
 	}
 	
 	private DNATokenizer tokenzier;
+	private Map<Integer, String> docsContents;
 	
 	/**
 	 * @param tokenzier the tokenizer that shall be used to tokenize the text.
 	 */
 	public DNATextMiner(DNATokenizer tokenzier) {
 		this.tokenzier = tokenzier;
+		this.docsContents = new HashMap<Integer, String>();
 	}
 	
 	/**
@@ -57,6 +62,9 @@ public class DNATextMiner {
 	 */
 	public void exportToCSV(List<String> files, String classLabel, String path,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
+		
+		if ( (trainSetSize + testSetSize + validationSetSize) != 1.0 )
+			throw new RuntimeException( "The ratio of the train/test/validation sets is invalid!" );
 		
 		Random random = new Random(seed);
 		List<Integer> docsIds = new ArrayList<Integer>();
@@ -158,6 +166,8 @@ public class DNATextMiner {
 				HashMap<Integer, Integer> statements_positions = new HashMap<Integer, Integer>();
 				
 				String docString = document.getText();
+//				flushToFile(docString, internalDocId);
+//				docsContents.put(internalDocId, docString);
 				
 				//Store statements start and end positions
 				for (SidebarStatement st : statements) {
@@ -392,8 +402,10 @@ public class DNATextMiner {
 							"," + tok.getDocId() + "," + tok.getInternalDocId() + "," + tok.getStart_position() +
 							"," + tok.getEnd_position() + ",");
 					
-					if (tok.getFeatures().size() != numberOfFeatures)
+					if (tok.getFeatures().size() != numberOfFeatures) {
+						System.err.println("Tok: " + tok.getFeatures().size() + ", Total: " + numberOfFeatures);
 						throw new RuntimeException("The token's feature vector size is different from the total number of features!");
+					}
 					
 					for (Double f : tok.getFeatures()) {
 						bw.write(f.toString() + ",");
@@ -420,6 +432,37 @@ public class DNATextMiner {
 			System.err.println("CSV file exists!");
 		}
 		
+	}
+	
+	public static void flushToFile(String txt, Integer internalDocId) {
+		txt = txt.replace("\n", " ");
+		try {
+			FileWriter fw = new FileWriter("temp/" + internalDocId.toString() + ".txt");
+			
+			BufferedWriter bw = new BufferedWriter(fw);
+			
+			bw.write(txt);
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static String readFlushedFile(Integer internalDocId) {
+		StringBuffer bff = new StringBuffer();
+		try {
+			FileReader fr = new FileReader("temp/" + internalDocId.toString() + ".txt");
+			BufferedReader br = new BufferedReader(fr);
+			String line = "";
+			while( (line = br.readLine()) != null ) {
+				bff.append(line);
+			}
+			
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return bff.toString();
 	}
 	
 }
