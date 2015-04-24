@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 import dna.DNAToken;
@@ -135,8 +136,24 @@ public class Vocabulary {
 
 		try {
 			if (file.exists()) {
-				System.err.println( "Warning Vocabulary file exists and will be deleted and recreated!" );
-				file.delete();
+				Scanner scanner = new Scanner(System.in);
+				boolean remove = false;
+				while(scanner.hasNext()) {
+					System.err.println("A vocabulary file exists, should I recreate it? (y or n)");
+					String option = scanner.next();
+					if ( option.equals( "y" ) ) {
+						remove = true;
+						file.delete();
+						break;
+					}
+					else if( option.equals( "n" ) ) {
+						remove = false;
+						return;
+					}
+					else {
+						System.err.println("Unknown option!");
+					}
+				}
 			}
 			
 			System.out.println("Creating the vocabulary file.");

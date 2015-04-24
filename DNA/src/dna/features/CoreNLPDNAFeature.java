@@ -58,7 +58,7 @@ public class CoreNLPDNAFeature extends DNAFeature {
 				docDNATokens.add(token);
 			}
 			else {
-				System.out.println( "Flushing... " + currentDocID + ", new id: " + token.getInternalDocId() );
+//				System.out.println( "Flushing... " + currentDocID + ", new id: " + token.getInternalDocId() );
 				if ( c == tokens.size()-1 ) {
 					docStringTokens.append( token.getText() + "\n" );
 					docDNATokens.add(token);

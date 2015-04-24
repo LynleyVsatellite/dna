@@ -1,7 +1,6 @@
 package dna;
 
-import java.util.ArrayList;
-import java.util.List;
+import dna.features.SparseVector;
 
 public class DNAToken {
 	
@@ -10,7 +9,7 @@ public class DNAToken {
 	private int start_position;
 	private int end_position;
 	private String label;
-	private List<Double> features;
+	private SparseVector features;
 	private int id;
 	//The ID of the document (from the database file) that this token belongs to.
 	private int docId;
@@ -18,7 +17,7 @@ public class DNAToken {
 	private int internalDocId;
 	
 	public DNAToken() {
-		features = new ArrayList<Double>();
+		features = new SparseVector();
 	}
 	
 	public String getText() {
@@ -48,11 +47,11 @@ public class DNAToken {
 		this.label = label;
 	}
 
-	public List<Double> getFeatures() {
+	public SparseVector getFeatures() {
 		return features;
 	}
 
-	public void setFeatures(List<Double> features) {
+	public void setFeatures(SparseVector features) {
 		this.features = features;
 	}
 

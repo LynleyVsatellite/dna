@@ -110,6 +110,7 @@ public class DNATextMiner {
 		}
 		
 		List<DNAToken> tokens = extract_data(files, classLabel);
+		System.out.println("The number of tokens: " + tokens.size());
 		Map<String, Set<Integer>> trainTestValDocsIds = new HashMap<String, Set<Integer>>();
 		trainTestValDocsIds.put("train", trainingDocsIds);
 		trainTestValDocsIds.put("test", testingDocsIds);
