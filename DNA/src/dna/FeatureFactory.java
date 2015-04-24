@@ -35,8 +35,13 @@ public class FeatureFactory {
 //		features.add( new NERDNAFeature() );
 		features.add( new NumberOfCharsDNAFeature() );
 //		features.add( new POSDNAFeature() );
-		features.add( new WordDNAFeature() );
-		features.add( new NGramDNAFeature(3) );
+		
+		DNAFeature f1 = new WordDNAFeature();
+		System.out.println("Number of word features: " + f1.numberOfFeatures());
+		features.add( f1 );
+		DNAFeature f2 = new NGramDNAFeature(3);
+		System.out.println("Number of n-gram features: " + f2.numberOfFeatures());
+		features.add( f2 );
 		
 		for ( DNAFeature f : this.features ) {
 			this.totalNumberOfFeatures += f.numberOfFeatures();
