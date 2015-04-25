@@ -24,7 +24,6 @@ import dna.features.HasWeirdCharDNAFeature;
 import dna.features.IsANumberDNAFeature;
 import dna.features.NGramDNAFeature;
 import dna.features.NumberOfCharsDNAFeature;
-import dna.features.Vocabulary;
 import dna.features.WordDNAFeature;
 import dna.textmining.Dataset;
 
@@ -106,7 +105,6 @@ public class DNATextMiner {
 		
 		List<DNAToken> tokens = getTokens(files, classLabel);
 		
-		Vocabulary.buildVocabularyFile(tokens, trainTestValDocsIds);
 		toCSVFile(tokens, features, trainTestValDocsIds, path);
 	}
 	
@@ -429,7 +427,7 @@ public class DNATextMiner {
 	 */
 	private static void toCSVFile(List<DNAToken> tokens, List<DNAFeature> features,
 			Map<String, Set<Integer>> trainTestValDocsIds, String path) {
-		FeatureFactory featFact = new FeatureFactory(tokens,features);
+		FeatureFactory featFact = new FeatureFactory(tokens, features, trainTestValDocsIds);
 		featFact.generateFeatures();
 		int numberOfFeatures = featFact.getTotalNumberOfFeatures();
 		
