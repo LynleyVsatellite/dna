@@ -45,7 +45,7 @@ public class CoreNLPDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		
 		int currentDocID = 0;
 		StringBuffer docStringTokens = new StringBuffer();
@@ -126,7 +126,6 @@ public class CoreNLPDNAFeature extends DNAFeature {
 			}
 		}
 		
-		return tokens;
 	}
 
 	@Override

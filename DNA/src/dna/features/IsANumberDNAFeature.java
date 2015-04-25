@@ -50,7 +50,7 @@ public class IsANumberDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		
 		for ( DNAToken tok : tokens ) {
 			String txt = tok.getText();
@@ -63,7 +63,6 @@ public class IsANumberDNAFeature extends DNAFeature {
 			}
 		}
 		
-		return tokens;
 	}
 
 	@Override

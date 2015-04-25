@@ -72,7 +72,7 @@ public class NERDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 
 		StringBuffer sbuffer = new StringBuffer();
 		List<String> words = new ArrayList<String>();
@@ -119,7 +119,6 @@ public class NERDNAFeature extends DNAFeature {
 			}
 		}
 		
-		return tokens;
 	}
 
 	@Override

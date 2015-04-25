@@ -44,14 +44,12 @@ public class NumberOfCharsDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		
 		for (DNAToken tok : tokens) {
 			Double charsNumber = new Double( tok.getText().length() );
 			tok.getFeatures().add( charsNumber );
 		}
-		
-		return tokens;
 		
 	}
 

@@ -9,7 +9,7 @@ public abstract class DNAFeature {
 	 * @param tokens the tokens to have their feature vector expanded
 	 * @return
 	 */
-	public abstract List<DNAToken> buildFeature(List<DNAToken> tokens);
+	public abstract void buildFeature(List<DNAToken> tokens);
 	/**
 	 * The number of features/elements that are added to each token's feature vector.
 	 * @return

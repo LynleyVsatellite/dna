@@ -8,10 +8,10 @@ public class DNAToken {
 	private String text;
 	private int start_position;
 	private int end_position;
-	private String label;
+	private String label;//either a positive class token or a negative class token
 	private SparseVector features;
 	private int id;
-	//The ID of the document (from the database file) that this token belongs to.
+	//The ID of the document (from the single dna database file) that this token belongs to.
 	private int docId;
 	//This id is used to identify documents when using many dna files, i.e. to avoid duplicates.
 	private int internalDocId;

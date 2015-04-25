@@ -64,7 +64,7 @@ public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		if(vocab == null)
 			throw new RuntimeException("A vocabulary is not set to build the feature!");
 		for (DNAToken tok : tokens) {
@@ -84,7 +84,6 @@ public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 			tok.getFeatures().addAll(Utils.asList(oneHot));
 		}
 		
-		return tokens;
 	}
 
 	private void buildNGrams() {

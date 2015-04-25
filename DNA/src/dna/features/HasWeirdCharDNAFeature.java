@@ -51,7 +51,7 @@ public class HasWeirdCharDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		Pattern pattern = Pattern.compile("\\P{L}+");
 		Matcher m = null;
 		
@@ -68,7 +68,6 @@ public class HasWeirdCharDNAFeature extends DNAFeature {
 			}
 		}
 		
-		return tokens;
 	}
 
 	@Override

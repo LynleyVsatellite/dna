@@ -75,7 +75,7 @@ public class POSDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		
 		StringBuffer sbuffer = new StringBuffer();
 		
@@ -104,7 +104,6 @@ public class POSDNAFeature extends DNAFeature {
 			tok.getFeatures().addAll( Utils.asList(features) );
 		}
 		
-		return tokens;
 	}
 
 	@Override

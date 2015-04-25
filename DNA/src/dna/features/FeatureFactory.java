@@ -33,16 +33,23 @@ public class FeatureFactory {
 	}
 	
 	/**
-	 * Generates the features for the tokens.
+	 * Generates the features for the original tokens that this FeatureFactory is based on.
 	 * @return the tokens with added features to them.
 	 */
-	public List<DNAToken> generateFeatures() {
+	public void generateFeatures() {
+		generateFeatures(tokens);
+	}
+	
+	/**
+	 * Generates the features for new tokens based on the features specified for this FeatureFactory.
+	 * @param tokens
+	 */
+	public void generateFeatures(List<DNAToken> tokens) {
 		
 		for (DNAFeature feature : features) {
-			tokens = feature.buildFeature(tokens);
+			feature.buildFeature(tokens);
 		}
 		
-		return tokens;
 	}
 	
 	public int getTotalNumberOfFeatures() {

@@ -430,7 +430,7 @@ public class DNATextMiner {
 	private static void toCSVFile(List<DNAToken> tokens, List<DNAFeature> features,
 			Map<String, Set<Integer>> trainTestValDocsIds, String path) {
 		FeatureFactory featFact = new FeatureFactory(tokens,features);
-		tokens = featFact.generateFeatures();
+		featFact.generateFeatures();
 		int numberOfFeatures = featFact.getTotalNumberOfFeatures();
 		
 		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");

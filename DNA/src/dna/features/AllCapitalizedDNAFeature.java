@@ -49,7 +49,7 @@ public class AllCapitalizedDNAFeature extends DNAFeature {
 	}
 
 	@Override
-	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+	public void buildFeature(List<DNAToken> tokens) {
 		for ( DNAToken tok : tokens ) {
 			String txt = tok.getText();
 			boolean allCapitals = txt.equals( txt.toUpperCase() );
@@ -62,7 +62,6 @@ public class AllCapitalizedDNAFeature extends DNAFeature {
 			}
 		}
 		
-		return tokens;
 	}
 
 	@Override
