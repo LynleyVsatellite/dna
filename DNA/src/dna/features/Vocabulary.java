@@ -1,61 +1,20 @@
 package dna.features;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 import dna.DNAToken;
 
 public class Vocabulary {
 	
-	public static void main(String[] args) {
-		//test case
-		
-		List<DNAToken> tokens = new ArrayList<DNAToken>();
-		DNAToken tok1 = new DNAToken();
-		tok1.setText("Rakan");
-		
-		DNAToken tok2 = new DNAToken();
-		tok2.setText("writing");
-		
-		DNAToken tok3 = new DNAToken();
-		tok3.setText("haKAn");
-		
-		DNAToken tok4 = new DNAToken();
-		tok4.setText("is");
-		
-		DNAToken tok5 = new DNAToken();
-		tok5.setText("writing");
-		
-		tokens.add( tok1 );
-		tokens.add( tok2 );
-		tokens.add( tok3 );
-		tokens.add( tok4 );
-		tokens.add( tok5 );
-		
-		Vocabulary voc = new Vocabulary(tokens);
-		
-		for (String t : voc.getTokens()) {
-			System.out.println("->"+t);
-		}
-		
-	}
-	
 	private Map<String, Integer> vocab;
 	
-	public Vocabulary( List<DNAToken> tokens ) {
-		vocab = readVocabularyFile();
+	public Vocabulary( List<DNAToken> tokens, 
+			Map<String, Set<Integer>> trainTestValDocsIds ) {
+		vocab = buildVocabulary(tokens, trainTestValDocsIds);
 	}
 	
 	
@@ -79,96 +38,54 @@ public class Vocabulary {
 		return txt.toLowerCase();
 	}
 	
-	public static Map<String, Integer> readVocabularyFile() {
-		File file = new File("vocab.txt");
-		Map<String, Integer> vocab = new LinkedHashMap<String, Integer>();
-
-		if ( !file.exists() ) {
-			throw new RuntimeException("Couldn't find the vocabulary file!");
-		}
-		else {
-			try {
-				FileReader fr = new FileReader( file );
-				BufferedReader br = new BufferedReader(fr);
-				String tok = "";
-				for( int i = 0; ( tok = br.readLine() ) != null; i++ ) {
-					if (!vocab.containsKey(tok)) {
-						vocab.put(tok, i);
-					}
-					else {
-						throw new RuntimeException("A duplicate in the tokens file!");
-					}
-				}
-
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		return vocab;
-	}
-
-	/**
-	 * 
-	 * @param tokens the tokens of the documents
-	 * @param trainTestValDocsIds a map with three keys "train", "test", "validate" that map
-	 * to sets. Each set contains the IDs of the documents that are used for training, testing, validation.
-	 */
-	public static void buildVocabularyFile(List<DNAToken> tokens, Map<String, Set<Integer>> trainTestValDocsIds) {
-		Set<String> vocab = new LinkedHashSet<String>();
-		File file = new File("vocab.txt");
+	private Map<String, Integer> buildVocabulary( List<DNAToken> tokens, Map<String, Set<Integer>> trainTestValDocsIds ) {
+		Map<String, Integer> voc = new LinkedHashMap<String, Integer>();
+		Set<String> index = new LinkedHashSet<String>();
 		
-		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");
 		Set<Integer> testDocsIDs = trainTestValDocsIds.get("test");
 		Set<Integer> valDocsIDs = trainTestValDocsIds.get("validate");
-
-		try {
-			if (file.exists()) {
-				Scanner scanner = new Scanner(System.in);
-				boolean remove = false;
-				System.err.println("A vocabulary file exists, should I recreate it? (y or n) ");
-				while(scanner.hasNext()) {
-					String option = scanner.next();
-					if ( option.equals( "y" ) ) {
-						remove = true;
-						file.delete();
-						break;
-					}
-					else if( option.equals( "n" ) ) {
-						remove = false;
-						return;
-					}
-					else {
-						System.err.println("Unknown option!");
-						System.err.println("A vocabulary file exists, should I recreate it? (y or n) ");
-					}
-				}
+		
+		for (DNAToken tok : tokens) {
+			if( !index.contains( preprocess( tok.getText() ) ) && 
+					!testDocsIDs.contains( tok.getInternalDocId() ) && 
+					!valDocsIDs.contains( tok.getInternalDocId() ) ) {
+				index.add( preprocess( tok.getText() ) );
 			}
-			
-			System.out.println("Creating the vocabulary file.");
-			file.createNewFile();
-			FileWriter fw = new FileWriter(file);
-			BufferedWriter bw = new BufferedWriter(fw);
-
-			for (DNAToken tok : tokens) {
-				if( !vocab.contains( preprocess( tok.getText() ) ) && 
-						!testDocsIDs.contains( tok.getInternalDocId() ) && 
-						!valDocsIDs.contains( tok.getInternalDocId() ) ) {
-					vocab.add( preprocess( tok.getText() ) );
-				}
-			}
-
-			for (String tok : vocab) {
-				bw.write(tok + "\n");
-			}
-
-			bw.close();
-			System.out.println("Done.");
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		
+		int i = 0;
+		for ( String token : index ) {
+			if (!voc.containsKey(token)) {
+				voc.put(token, i++);
+			}
+			else {
+				throw new RuntimeException("A duplicate token in the tokens index!");
+			}
+		}
+		
+		return voc;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
