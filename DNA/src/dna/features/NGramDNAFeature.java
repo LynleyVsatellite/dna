@@ -11,7 +11,7 @@ import dna.DNAFeature;
 import dna.DNAToken;
 import dna.Utils;
 
-public class NGramDNAFeature extends DNAFeature {
+public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 	
 	public static void main(String[] args) {
 		//Test case
@@ -58,7 +58,6 @@ public class NGramDNAFeature extends DNAFeature {
 	 * @param n the size of the gram
 	 */
 	public NGramDNAFeature(int n) {
-		vocab = new Vocabulary();
 		nGrams = new LinkedHashMap<String, Integer>();
 		this.n = n;
 		buildNGrams();
@@ -66,7 +65,8 @@ public class NGramDNAFeature extends DNAFeature {
 
 	@Override
 	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
-		
+		if(vocab == null)
+			throw new RuntimeException("A vocabulary is not set to build the feature!");
 		for (DNAToken tok : tokens) {
 			String tokString = tok.getText();
 			tokString = preprocess(tokString);
@@ -128,8 +128,14 @@ public class NGramDNAFeature extends DNAFeature {
 		return txt.toLowerCase();
 	}
 
+	public void setVocab(Vocabulary vocab) {
+		this.vocab = vocab;
+	}
+
 	@Override
 	public int numberOfFeatures() {
+		if(vocab == null)
+			throw new RuntimeException("A vocabulary is not set to build the features!");
 		return nGrams.size();
 	}
 }

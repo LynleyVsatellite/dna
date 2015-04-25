@@ -12,11 +12,10 @@ import dna.Utils;
  *
  */
 
-public class WordDNAFeature extends DNAFeature {
+public class WordDNAFeature extends DNAFeature implements VocabularyDependent {
 	
 	public static void main(String[] args) {
 		//Test case
-		Vocabulary vocab = new Vocabulary();
 		
 		List<DNAToken> tokens = new ArrayList<DNAToken>();
 		DNAToken tok1 = new DNAToken();
@@ -54,12 +53,14 @@ public class WordDNAFeature extends DNAFeature {
 	private Vocabulary vocab;
 	
 	public WordDNAFeature() {
-		vocab = new Vocabulary();
 	}
 
 
 	@Override
 	public List<DNAToken> buildFeature(List<DNAToken> tokens) {
+		if(vocab == null)
+			throw new RuntimeException("A vocabulary is not set to build the feature!");
+		
 		if (!tokens.isEmpty()) {
 			for (DNAToken tok : tokens) {
 				int index = vocab.getIndex( tok.getText() );
@@ -80,7 +81,15 @@ public class WordDNAFeature extends DNAFeature {
 
 	@Override
 	public int numberOfFeatures() {
+		if(vocab == null)
+			throw new RuntimeException("A vocabulary is not set to get the number of features!");
 		return vocab.getSize();
 	}
 
+
+	public void setVocab(Vocabulary vocab) {
+		this.vocab = vocab;
+	}
+
+	
 }
