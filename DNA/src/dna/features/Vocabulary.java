@@ -44,7 +44,7 @@ public class Vocabulary {
 		tokens.add( tok4 );
 		tokens.add( tok5 );
 		
-		Vocabulary voc = new Vocabulary();
+		Vocabulary voc = new Vocabulary(tokens);
 		
 		for (String t : voc.getTokens()) {
 			System.out.println("->"+t);
@@ -54,20 +54,10 @@ public class Vocabulary {
 	
 	private Map<String, Integer> vocab;
 	
-	public Vocabulary() {
+	public Vocabulary( List<DNAToken> tokens ) {
 		vocab = readVocabularyFile();
 	}
 	
-	/**
-	 * 
-	 * @param tokens the tokens of all the documents
-	 * @param trainTestValDocsIds a map with three keys "train", "test", "validate" that map
-	 * to sets. Each set contains the IDs of the documents that are used for training, testing, validation.
-	 */
-	public Vocabulary(List<DNAToken> tokens, Map<String, Set<Integer>> trainTestValDocsIds) {
-		buildVocabularyFile(tokens, trainTestValDocsIds);
-		vocab = readVocabularyFile();
-	}
 	
 	public int getIndex( String txt ) {
 		txt = preprocess(txt);
@@ -138,8 +128,8 @@ public class Vocabulary {
 			if (file.exists()) {
 				Scanner scanner = new Scanner(System.in);
 				boolean remove = false;
+				System.err.println("A vocabulary file exists, should I recreate it? (y or n) ");
 				while(scanner.hasNext()) {
-					System.err.println("A vocabulary file exists, should I recreate it? (y or n)");
 					String option = scanner.next();
 					if ( option.equals( "y" ) ) {
 						remove = true;
@@ -152,6 +142,7 @@ public class Vocabulary {
 					}
 					else {
 						System.err.println("Unknown option!");
+						System.err.println("A vocabulary file exists, should I recreate it? (y or n) ");
 					}
 				}
 			}

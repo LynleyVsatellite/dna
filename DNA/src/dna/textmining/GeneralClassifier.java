@@ -1,4 +1,4 @@
-package dna.classification;
+package dna.textmining;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

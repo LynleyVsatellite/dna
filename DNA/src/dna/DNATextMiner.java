@@ -16,7 +16,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import dna.features.AllCapitalizedDNAFeature;
+import dna.features.CoreNLPDNAFeature;
+import dna.features.FeatureFactory;
+import dna.features.HasCapitalLetterDNAFeature;
+import dna.features.HasWeirdCharDNAFeature;
+import dna.features.IsANumberDNAFeature;
+import dna.features.NGramDNAFeature;
+import dna.features.NumberOfCharsDNAFeature;
 import dna.features.Vocabulary;
+import dna.features.WordDNAFeature;
+import dna.textmining.Dataset;
 
 
 public class DNATextMiner {
@@ -31,7 +41,18 @@ public class DNATextMiner {
 		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
-		textMiner.exportToCSV(files, classLabel, "trainset.csv", 0.6, 0.2, 0.2, 1);
+		
+		List<DNAFeature> features = new ArrayList<DNAFeature>();
+		features.add( new HasCapitalLetterDNAFeature() );
+		features.add( new CoreNLPDNAFeature() );
+		features.add( new HasWeirdCharDNAFeature() );
+		features.add( new AllCapitalizedDNAFeature() );
+		features.add( new IsANumberDNAFeature() );
+		features.add( new NumberOfCharsDNAFeature() );
+		features.add(new WordDNAFeature());
+		features.add(new NGramDNAFeature(3));
+		
+		textMiner.exportToCSV(files, classLabel, features, "trainset.csv", 0.6, 0.2, 0.2, 1);
 		System.out.println( new Date() );
 	}
 	
@@ -46,22 +67,63 @@ public class DNATextMiner {
 		this.docsContents = new HashMap<Integer, String>();
 	}
 	
+	public Dataset makeDataset(List<String> files, String classLabel, List<DNAFeature> features,
+			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
+		Dataset dataset = new Dataset();
+		
+		Map<String, Set<Integer>> trainTestValDocsIds  = 
+				getTrainTestValidateSplit(files, trainSetSize, testSetSize, validationSetSize, seed);
+		
+		List<DNAToken> tokens = getTokens(files, classLabel);
+		
+		return dataset;
+	}
+	
 	/**
-	 * Exports data of the dna file into a CSV file to be used for training.
-	 * @param files a list of paths to dna files.
+	 * Generates a CSV file that corresponds to a dataset to be used by a learning algorithm.
+	 * 
+	 * NOTE: it's not recommended to export to a CSV file because of the high-dimensionality of the feature space.
+	 *       Because of the too much features, the CSV file will be REALLY huge!
+	 * 
+	 * @param files the paths to dna files.
 	 * @param classLabel the named entity that shall be used as a positive class for training. 
 	 * the value of this parameter is either "Person", "Organization" or "Concept".
 	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
 	 * will be given the positive class label, while the rest of the tokens will have the negative
 	 * class label.
+	 * @param features the features to be used for the tokens.
 	 * @param path where to save the file
-	 * @param trainSetSize the percentage [0.0 , 1.0] of the documents to be used as training data.
-	 * @param testSetSize the percentage [0.0 , 1.0] of the documents to be used as testing data.
-	 * @param validationSetSize the percentage [0.0 , 1.0] of the documents to be used as validation data.
-	 * 
+	 * @param trainSetSize The fraction of the documents to be used for training (a number between 0.0 and 1.0.)
+	 * @param testSetSize The fraction of the documents to be used for testing (a number between 0.0 and 1.0.)
+	 * @param validationSetSize The fraction of the documents to be used for validation (a number between 0.0 and 1.0.)
+	 * @param seed the seed for the random generator
 	 */
-	public void exportToCSV(List<String> files, String classLabel, String path,
+	public void exportToCSV(List<String> files, String classLabel,  List<DNAFeature> features, String path,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
+		
+		Map<String, Set<Integer>> trainTestValDocsIds  = 
+				getTrainTestValidateSplit(files, trainSetSize, testSetSize, validationSetSize, seed);
+		
+		List<DNAToken> tokens = getTokens(files, classLabel);
+		
+		Vocabulary.buildVocabularyFile(tokens, trainTestValDocsIds);
+		toCSVFile(tokens, features, trainTestValDocsIds, path);
+	}
+	
+	/**
+	 * This method randomly selects some documents for training, testing and validation. 
+	 * @param files paths to the dna files.
+	 * @param trainSetSize The fraction of the documents to be used for training (a number between 0.0 and 1.0.)
+	 * @param testSetSize The fraction of the documents to be used for testing (a number between 0.0 and 1.0.)
+	 * @param validationSetSize The fraction of the documents to be used for validation (a number between 0.0 and 1.0.)
+	 * @param seed the seed for the random generator
+	 * @return the internal IDs of the documents that are used for training, testing and validation. The IDs of the documents 
+	 * that are used for training are mapped to the key 'train', those for testing mapped to the key 'test' and those for validation
+	 * are mapped to the key 'validate'.
+	 */
+	public Map<String, Set<Integer>> getTrainTestValidateSplit( List<String> files,
+			double trainSetSize, double testSetSize, double validationSetSize, int seed ) {
+		Map<String, Set<Integer>> trainTestValDocsIds = new HashMap<String, Set<Integer>>();
 		
 		if ( (trainSetSize + testSetSize + validationSetSize) != 1.0 )
 			throw new RuntimeException( "The ratio of the train/test/validation sets is invalid!" );
@@ -109,15 +171,11 @@ public class DNATextMiner {
 			}
 		}
 		
-		List<DNAToken> tokens = extract_data(files, classLabel);
-		System.out.println("The number of tokens: " + tokens.size());
-		Map<String, Set<Integer>> trainTestValDocsIds = new HashMap<String, Set<Integer>>();
 		trainTestValDocsIds.put("train", trainingDocsIds);
 		trainTestValDocsIds.put("test", testingDocsIds);
 		trainTestValDocsIds.put("validate", validationDocsIds);
 		
-		Vocabulary.buildVocabularyFile(tokens, trainTestValDocsIds);
-		toCSVFile(tokens, trainTestValDocsIds, path);
+		return trainTestValDocsIds;
 	}
 	
 	/**
@@ -369,10 +427,10 @@ public class DNATextMiner {
 	 * key map to a set that contains the IDs of the documents that are used for training, testing, and validation.
 	 * @param path where to save the CSV file.
 	 */
-	private static void toCSVFile(List<DNAToken> tokens, 
+	private static void toCSVFile(List<DNAToken> tokens, List<DNAFeature> features,
 			Map<String, Set<Integer>> trainTestValDocsIds, String path) {
-		FeatureFactory featFact = new FeatureFactory(tokens);
-		tokens = featFact.addFeatures();
+		FeatureFactory featFact = new FeatureFactory(tokens,features);
+		tokens = featFact.generateFeatures();
 		int numberOfFeatures = featFact.getTotalNumberOfFeatures();
 		
 		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");
