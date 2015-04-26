@@ -68,12 +68,13 @@ public class DNATextMiner {
 	
 	public Dataset makeDataset(List<String> files, String classLabel, List<DNAFeature> features,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
-		Dataset dataset = new Dataset();
 		
 		Map<String, Set<Integer>> trainTestValDocsIds  = 
 				getTrainTestValidateSplit(files, trainSetSize, testSetSize, validationSetSize, seed);
 		
 		List<DNAToken> tokens = getTokens(files, classLabel);
+		
+		Dataset dataset = new Dataset(tokens, features, trainTestValDocsIds);
 		
 		return dataset;
 	}
@@ -289,7 +290,7 @@ public class DNATextMiner {
 					DNAToken tok = docTokens.get(i);
 					tok.setDocId( document.getId() );
 					tok.setInternalDocId(internalDocId);
-					tok.setId(i);
+					tok.setIndex(i);
 				}
 //				if (internalDocId==127) {
 //					flushListToFile(docTokens);
@@ -311,6 +312,11 @@ public class DNATextMiner {
 //		
 //		if(exportToCSV)
 //			toCSVFile(allTokens, featFact.getNumberOfFeatures(), files.get(0));
+		
+		for ( int i = 0; i < allTokens.size(); i++ ) {
+			DNAToken token = allTokens.get(i);
+			token.setId(i);
+		}
 		
 		return allTokens;
 	}
