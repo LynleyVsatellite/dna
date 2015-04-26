@@ -50,10 +50,6 @@ public class Dataset {
 		}
 	}
 	
-	public List<String> getFeaturesNames() {
-		return featureFactory.getFeaturesNames();
-	}
-	
 	public int getFeatureSpaceSize() {
 		return featureFactory.getTotalNumberOfFeatures();
 	}

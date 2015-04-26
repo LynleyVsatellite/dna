@@ -26,6 +26,7 @@ import dna.features.NGramDNAFeature;
 import dna.features.NumberOfCharsDNAFeature;
 import dna.features.WordDNAFeature;
 import dna.textmining.Dataset;
+import dna.textmining.TokenClassifier;
 
 
 public class DNATextMiner {
@@ -257,7 +258,7 @@ public class DNATextMiner {
 						//tokenize and flush the normal text and clear its buffer.
 						List<DNAToken> temp_tokens = getTokenzier().tokenize(normalTextStartPosition,
 								normalText.toString());
-						temp_tokens = giveLabels(temp_tokens, "N");
+						temp_tokens = giveLabels(temp_tokens, TokenClassifier.NEGATIVE_CLASS);
 						docTokens.addAll( temp_tokens );
 						normalText = new StringBuffer();
 						
@@ -268,7 +269,7 @@ public class DNATextMiner {
 						statementText.append( docString.substring( start_pos, end_pos ) );
 						
 						temp_tokens = getTokenzier().tokenize(start_pos, statementText.toString());
-						temp_tokens = giveLabels(temp_tokens, "P");
+						temp_tokens = giveLabels(temp_tokens, TokenClassifier.POSITIVE_CLASS);
 						docTokens.addAll( temp_tokens );
 						statementText = new StringBuffer();
 						normalTextStartPosition = end_pos;
@@ -281,7 +282,7 @@ public class DNATextMiner {
 				if ( normalText.length() > 0 ) {
 					List<DNAToken> temp_tokens = getTokenzier().tokenize(normalTextStartPosition,
 							normalText.toString());
-					temp_tokens = giveLabels(temp_tokens, "N");
+					temp_tokens = giveLabels(temp_tokens, TokenClassifier.NEGATIVE_CLASS);
 					docTokens.addAll( temp_tokens );
 					normalText = new StringBuffer();
 				}

@@ -20,13 +20,17 @@ public class SparseVector implements Iterable<Double> {
 		currentIndex = 0;
 	}
 	
+	public SparseVector( int size ) {
+		currentIndex = size;
+	}
+	
 	public void add( double value ) {
 		if (value != 0.0)
 			ST.put(currentIndex, value);
 		currentIndex++;
 	}
 	
-	public void addAll(double[] list) {
+	public void addAll(Double[] list) {
 		for ( double value : list ) {
 			add(value);
 		}

@@ -1,6 +1,5 @@
 package dna.features;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +17,6 @@ public class FeatureFactory {
 	private int totalNumberOfFeatures;
 	private List<DNAFeature> features;
 	private Vocabulary vocab;
-	private List<String> featuresNames;
 	
 	public FeatureFactory(List<DNAToken> tokens, List<DNAFeature> features, 
 			Map<String, Set<Integer>> trainTestValDocsIds) {
@@ -26,7 +24,6 @@ public class FeatureFactory {
 		this.features = features;
 		this.totalNumberOfFeatures = 0;
 		this.vocab = new Vocabulary(tokens, trainTestValDocsIds);
-		this.featuresNames = new ArrayList<String>();
 		
 		for ( DNAFeature f : features ) {
 			if ( f instanceof VocabularyDependent )
@@ -35,14 +32,12 @@ public class FeatureFactory {
 		
 		for ( int j = 0; j < features.size(); j++ ) {
 			DNAFeature f = features.get(j);
-			for( int i = 0; i < f.numberOfFeatures(); i++ ) {
-				featuresNames.add( j + "_" + i );
-			}
+//			for( int i = 0; i < f.numberOfFeatures(); i++ ) {
+//				featuresNames.add( j + "_" + i );
+//			}
 			this.totalNumberOfFeatures += f.numberOfFeatures();
 		}
 		
-		if( featuresNames.size() != totalNumberOfFeatures)
-			throw new RuntimeException("The number of features names is not the same as the number of features!");
 		
 	}
 	
@@ -70,9 +65,6 @@ public class FeatureFactory {
 		return totalNumberOfFeatures;
 	}
 
-	public List<String> getFeaturesNames() {
-		return featuresNames;
-	}
 	
 
 }

@@ -13,5 +13,6 @@
 			<attribute name="javadoc_location" value="jar:file:/Users/rockyrock/Downloads/stanford-corenlp-3.4.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Users/rockyrock/git/dna/DNA/lib/weka.jar" sourcepath="/Users/rockyrock/Downloads/stable-3-6/weka/weka-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
