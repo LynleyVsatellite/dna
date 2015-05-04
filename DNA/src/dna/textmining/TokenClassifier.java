@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.Logistic;
+import weka.classifiers.evaluation.TwoClassStats;
+import weka.classifiers.functions.SimpleLogistic;
 import dna.DNAToken;
 import dna.features.SparseVector;
 
@@ -27,14 +28,14 @@ public class TokenClassifier implements Serializable {
 	public static final String NEGATIVE_CLASS = "N"; 
 	private int windowSize;
 	private LinkedHashSet<String> featuresNames;
-//	private Map<Integer, DNAToken> tokenIdToToken;
 	/**
 	 * Creates a TokenClassifier with a default Logistic Regression classifier and window size of 1 token
 	 *  (i.e one token before the current token and one after).
 	 * @param dataset
 	 */
 	public TokenClassifier(Dataset dataset) {
-		this(dataset, new Logistic(), 1);
+		this(dataset, new SimpleLogistic(), 1);
+//		this(dataset, new J48(), 1);
 	}
 	
 	/**
@@ -50,38 +51,19 @@ public class TokenClassifier implements Serializable {
 		this.wekaClf = wekaClf;
 		this.windowSize = windowSize;
 		LinkedHashSet<String> classes = new LinkedHashSet<String>();
-//		tokenIdToToken = new HashMap<Integer, DNAToken>();
 		classes.add( POSITIVE_CLASS );
 		classes.add( NEGATIVE_CLASS );
 		featuresNames = new LinkedHashSet<String>();
 		
-		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * windowSize; i++ )
+		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * (2*windowSize+1); i++ )
 			featuresNames.add( i.toString() );
-//		
-//		for (DNAToken token : dataset.getTrainingSet()) {
-//			if ( tokenIdToToken.containsKey( token.getId() ) )
-//				throw new RuntimeException( "Two tokens have the same ID!!!" );
-//			else
-//				tokenIdToToken.put(token.getId(), token);
-//		}
-//		for (DNAToken token : dataset.getTestSet()) {
-//			if ( tokenIdToToken.containsKey( token.getId() ) )
-//				throw new RuntimeException( "Two tokens have the same ID!!!" );
-//			else
-//				tokenIdToToken.put(token.getId(), token);
-//		}
-//		for (DNAToken token : dataset.getValidationSet()) {
-//			if ( tokenIdToToken.containsKey( token.getId() ) )
-//				throw new RuntimeException( "Two tokens have the same ID!!!" );
-//			else
-//				tokenIdToToken.put(token.getId(), token);
-//		}
 		
 		clf = new GeneralClassifier(wekaClf, featuresNames, classes, true);
 		
 	}
 	
 	public double classify(String text) {
+		//TODO 
 		if (isTrained) {
 			return 0.0;
 		}
@@ -90,9 +72,16 @@ public class TokenClassifier implements Serializable {
 		}
 	}
 	
+	/**
+	 * Constructs a feature vector based on a window around the current token.
+	 * @param docTokens the tokens of a document.
+	 * @return
+	 */
 	private List<SparseVector> getWindowVectors( List<DNAToken> docTokens ) {
 		List<SparseVector> vectors = new ArrayList<SparseVector>();
-
+//		System.out.println( "Getting window vectors ... " );
+//		System.out.println( "Doc tokens: " + docTokens.size() );
+		int counter = 0;
 		for ( int i = 0; i < docTokens.size(); i++  ) {
 			DNAToken token = docTokens.get(i);
 			List<SparseVector> previousTokensVectors = new ArrayList<SparseVector>();
@@ -127,6 +116,8 @@ public class TokenClassifier implements Serializable {
 			}
 			
 			vectors.add(windowVector);
+//			System.out.println( "Token " + counter++ );
+			
 		}
 		
 		//TODO Also add the feature of the previous prediction! Make sure to modify the number of feature space and featureNames!
@@ -135,8 +126,12 @@ public class TokenClassifier implements Serializable {
 	}
 	
 	public void train() {
+		System.out.println( "Started training ..." );
 		List<DNAToken> trainSet = dataset.getTrainingSet();
 		List<List<DNAToken>> docs = fromTokensToDocs(trainSet);
+		
+		System.out.println( "Number of docs: " + docs.size() );
+		int counter = 0;
 		
 		try {
 			for (List<DNAToken> docTokens : docs) {
@@ -153,10 +148,10 @@ public class TokenClassifier implements Serializable {
 						classValue = POSITIVE_CLASS;
 					else
 						throw new RuntimeException( "Unknown class label!!" );
-					
 					clf.updateData(row, classValue);
 					
 				}
+				System.out.println("Added the samples from document " + counter++);
 			}
 			
 			clf.updateClassifier();
@@ -164,14 +159,19 @@ public class TokenClassifier implements Serializable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		isTrained = true;
 	}
 	
+	/**
+	 * Converts a SparseVector to a format appropriate for use by the GeneralClassifier.
+	 * @param vector a sparse feature vector.
+	 * @return
+	 */
 	private Map<String, Double> getWekaVector(SparseVector vector) {
 		Map<String, Double> row = new HashMap<String, Double>();
 		
 		if ( vector.size() != featuresNames.size() )
-			throw new RuntimeException( "The size of the feature vector is different from the number of feautres!" );
+			throw new RuntimeException( "The size of the feature vector is different from the number of features!" );
 		else {
 
 			int i = 0; 
@@ -186,16 +186,122 @@ public class TokenClassifier implements Serializable {
 	}
 
 	public void test() {
-		List<DNAToken> testSet = dataset.getTestSet();
-		//TODO throw an expcetion if the test set size is zero! The same for the validation set!
-		try {
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
+		List<DNAToken> set = dataset.getTestSet();
+		int tp = 0;
+		int fp = 0;
+		int tn = 0;
+		int fn = 0;
+		if ( set.size() == 0 ) {
+			throw new RuntimeException( "The test set size is zero!" );
 		}
+		else if (!isTrained) {
+			throw new RuntimeException( "The classifier is not trained yet to be tested!" );
+		}
+		else {
+			try {
+				List<List<DNAToken>> docs = fromTokensToDocs(set);
+				for (List<DNAToken> docTokens : docs) {
+					List<SparseVector> windowVectors = getWindowVectors(docTokens);
+					int i = 0;
+					for ( SparseVector vector : windowVectors ) {
+						//construct the feature vector for weka
+						Map<String, Double> row = getWekaVector(vector);
+						DNAToken token = docTokens.get(i++);
+						String classValue = "";
+						if ( token.getLabel().equals( NEGATIVE_CLASS ) )
+							classValue = NEGATIVE_CLASS;
+						else if ( token.getLabel().equals( POSITIVE_CLASS ) )
+							classValue = POSITIVE_CLASS;
+						else
+							throw new RuntimeException( "Unknown class label!!" );
+						
+						String clfResult = clf.classifyInstance(row);
+						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
+							tp++;
+						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
+							fn++;
+						else if ( classValue.equals( NEGATIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
+							fp++;
+						else if ( classValue.equals( NEGATIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
+							tn++;
+						else {
+							throw new RuntimeException( "Something is wrong while computing performance stats!" );
+						}
+					}
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		TwoClassStats stats = new TwoClassStats(tp, fp, tn, fn);
+		System.out.println( "++++++ Testing stats ++++++" );
+		System.out.printf( "Recal: %f, Precision: %f, F1-measure: %f\n", stats.getRecall(), stats.getPrecision(), stats.getFMeasure() );
+		stats.getConfusionMatrix().toString();
 	}
 	
+	public void validate() {
+		List<DNAToken> set = dataset.getValidationSet();
+		int tp = 0;
+		int fp = 0;
+		int tn = 0;
+		int fn = 0;
+		if ( set.size() == 0 ) {
+			throw new RuntimeException( "The validation set size is zero!" );
+		}
+		else if (!isTrained) {
+			throw new RuntimeException( "The classifier is not trained yet to be tested!" );
+		}
+		else {
+			try {
+				List<List<DNAToken>> docs = fromTokensToDocs(set);
+				for (List<DNAToken> docTokens : docs) {
+					List<SparseVector> windowVectors = getWindowVectors(docTokens);
+					int i = 0;
+					for ( SparseVector vector : windowVectors ) {
+						//construct the feature vector for weka
+						Map<String, Double> row = getWekaVector(vector);
+						DNAToken token = docTokens.get(i++);
+						String classValue = "";
+						if ( token.getLabel().equals( NEGATIVE_CLASS ) )
+							classValue = NEGATIVE_CLASS;
+						else if ( token.getLabel().equals( POSITIVE_CLASS ) )
+							classValue = POSITIVE_CLASS;
+						else
+							throw new RuntimeException( "Unknown class label!!" );
+						
+						String clfResult = clf.classifyInstance(row);
+						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
+							tp++;
+						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
+							fn++;
+						else if ( classValue.equals( NEGATIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
+							fp++;
+						else if ( classValue.equals( NEGATIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
+							tn++;
+						else {
+							throw new RuntimeException( "Something is wrong while computing performance stats!" );
+						}
+					}
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		TwoClassStats stats = new TwoClassStats(tp, fp, tn, fn);
+		System.out.println( "++++++ Validation stats ++++++" );
+		System.out.printf( "Recal: %f, Precision: %f, F1-measure: %f\n", stats.getRecall(), stats.getPrecision(), stats.getFMeasure() );
+		stats.getConfusionMatrix().toString();
+	}
+	
+	/**
+	 * Each list represents the tokens of a document.
+	 * @param tokens a list of tokens that should be grouped by documents. So the tokens of each document will be grouped in a single list.
+	 * @return a list of lists of tokens. Each list contains the tokens of a document.
+	 */
 	public List<List<DNAToken>> fromTokensToDocs(List<DNAToken> tokens) {
 		List<List<DNAToken>> docs = new ArrayList<List<DNAToken>>();
 		

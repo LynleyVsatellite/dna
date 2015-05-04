@@ -60,7 +60,6 @@ public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 	public NGramDNAFeature(int n) {
 		nGrams = new LinkedHashMap<String, Integer>();
 		this.n = n;
-		buildNGrams();
 	}
 
 	@Override
@@ -129,6 +128,7 @@ public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 
 	public void setVocab(Vocabulary vocab) {
 		this.vocab = vocab;
+		buildNGrams();
 	}
 
 	@Override

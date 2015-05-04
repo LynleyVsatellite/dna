@@ -64,14 +64,14 @@ public class GeneralClassifier implements Serializable {
 			throw new Exception("The specified row's features are not of" +
 					" the same number as in the dataset definition");
 		
-		Instance instance = new Instance(row.size() + 1);
-		Attribute att;
-		
+		int featureSpaceSize = row.keySet().size()+1;
+		double vals[] = new double[featureSpaceSize];
+		int i = 0;
 		for ( String feature : row.keySet() ) {
-			att = relation.attribute(feature);
-			instance.setValue(att, row.get(feature));
+			vals[i++] = row.get(feature);
 		}
 		
+		Instance instance = new Instance(1.0, vals);
 		Instance sparseInstance = new SparseInstance(instance);
 		sparseInstance.setDataset(relation);
 		

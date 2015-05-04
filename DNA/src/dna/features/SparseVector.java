@@ -15,13 +15,13 @@ public class SparseVector implements Iterable<Double> {
 	private Map<Integer, Double> ST;
 	private int currentIndex;
 	
-	public SparseVector() {
+	public SparseVector( int size ) {
 		ST = new HashMap<Integer, Double>();
-		currentIndex = 0;
+		currentIndex = size;
 	}
 	
-	public SparseVector( int size ) {
-		currentIndex = size;
+	public SparseVector() {
+		this(0);
 	}
 	
 	public void add( double value ) {
@@ -30,7 +30,7 @@ public class SparseVector implements Iterable<Double> {
 		currentIndex++;
 	}
 	
-	public void addAll(Double[] list) {
+	public void addAll(double[] list) {
 		for ( double value : list ) {
 			add(value);
 		}
@@ -53,8 +53,8 @@ public class SparseVector implements Iterable<Double> {
 			return false;
 	}
 
-	public Double[] toArray() {
-		Double[] array = new Double[ size() ];
+	public double[] toArray() {
+		double[] array = new double[ size() ];
 		for ( int i = 0; i < size(); i++ ) {
 			if ( ST.containsKey(i) ) {
 				array[i] = ST.get(i);

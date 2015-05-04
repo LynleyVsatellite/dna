@@ -32,6 +32,10 @@ public class Dataset {
 		testSet = new ArrayList<DNAToken>();
 		validationSet = new ArrayList<DNAToken>();
 		
+		System.out.println( "Building features ..." );
+		featureFactory.generateFeatures();
+		System.out.println( "Done building features ..." );
+		
 		Set<Integer> trainDocsIDs = trainTestValDocsIds.get("train");
 		Set<Integer> testDocsIDs = trainTestValDocsIds.get("test");
 		Set<Integer> valDocsIDs = trainTestValDocsIds.get("validate");

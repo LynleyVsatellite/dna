@@ -43,7 +43,6 @@ public class FeatureFactory {
 	
 	/**
 	 * Generates the features for the original tokens that this FeatureFactory is based on.
-	 * @return the tokens with added features to them.
 	 */
 	public void generateFeatures() {
 		generateFeatures(tokens);
