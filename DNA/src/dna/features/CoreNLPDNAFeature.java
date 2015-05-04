@@ -17,6 +17,11 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 
+
+/**
+ * This class adds Part-of-speech (POS) and Named-Entity (NE) features for the tokens.
+ *
+ */
 public class CoreNLPDNAFeature extends DNAFeature {
 	
 	private static final String ner_tagger = 

@@ -9,6 +9,8 @@ import dna.Utils;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 
 /**
+ * NOTE: DON'T USE, but use @CoreNLPDNAFeature. This one is using different tokenizer.
+ * 
  * Part-of-Speech feature that uses the Stanford POS tagger for German.  
  * Tag-list from here: https://web.archive.org/web/20130128232615/http://www.ims.uni-stuttgart.de/projekte/CQPDemos/Bundestag/help-tagset.html
  */

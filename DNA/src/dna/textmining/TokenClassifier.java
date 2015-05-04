@@ -11,6 +11,7 @@ import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.TwoClassStats;
 import weka.classifiers.functions.SimpleLogistic;
 import dna.DNAToken;
+import dna.DNATokenizer;
 import dna.features.SparseVector;
 
 //TODO Also add the feature of the previous prediction! Make sure to modify the number of feature space and featureNames!
@@ -35,14 +36,17 @@ public class TokenClassifier implements Serializable {
 	 */
 	public TokenClassifier(Dataset dataset) {
 		this(dataset, new SimpleLogistic(), 1);
-//		this(dataset, new J48(), 1);
 	}
 	
 	/**
 	 * 
-	 * @param dataset
-	 * @param wekaClf
-	 * @param windowSize
+	 * @param dataset the dataset that holds the training, testing and validation data.
+	 * @param wekaClf Weka classifier
+	 * @param windowSize the number of tokens before and after the 
+	 * 	current token to be used for the current token's feature vector. 
+	 * 	So 1 means one token before the current token and one token after the current token.
+	 * 	And 2 means two tokens before and two tokens after. If 1 is chosen, then the size of a sample's
+	 * 	feature vector is 3 * the size of a token's feature vector (because: previous token + current token + next token).
 	 */
 	public TokenClassifier(Dataset dataset, Classifier wekaClf, int windowSize) {
 		
@@ -62,10 +66,48 @@ public class TokenClassifier implements Serializable {
 		
 	}
 	
-	public double classify(String text) {
-		//TODO 
+	/**
+	 * Classifies the tokens as either they belong to the positive class (named entity) or not.
+	 * @param text the text of a document.
+	 * @param tokenzier the tokenzier that was used to create the training tokens/data.
+	 * @return
+	 */
+	public List<DNAToken> classify(String text, DNATokenizer tokenzier) {
+		List<DNAToken> tokens = tokenzier.tokenize(0, text);
+		for ( int i = 0; i < tokens.size(); i++ ) {
+			DNAToken tok = tokens.get(i);
+			tok.setIndex(i);
+		}
 		if (isTrained) {
-			return 0.0;
+			classify(tokens);
+			return tokens;
+		}
+		else {
+			throw new RuntimeException( "The classifier is not trained!" );
+		}
+	}
+	
+	/**
+	 * Classifies the tokens of a document
+	 * @param tokens the tokens of a document
+	 */
+	public void classify(List<DNAToken> tokens) {
+		if (isTrained) {
+			List<SparseVector> windowVectors = getWindowVectors(tokens);
+			int i = 0;
+			for ( SparseVector vector : windowVectors ) {
+				Map<String, Double> row = getWekaVector(vector);
+				DNAToken token = tokens.get(i++);
+				
+				try {
+					String clfResult = clf.classifyInstance(row);
+					token.setLabel(clfResult);
+					double positive_pred_prob = clf.distributionForInstance(row).get( TokenClassifier.POSITIVE_CLASS );
+					token.setPrediction_probability( positive_pred_prob );
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		else {
 			throw new RuntimeException( "The classifier is not trained!" );
@@ -120,14 +162,16 @@ public class TokenClassifier implements Serializable {
 			
 		}
 		
-		//TODO Also add the feature of the previous prediction! Make sure to modify the number of feature space and featureNames!
-		
 		return vectors;
 	}
 	
+	/**
+	 * Trains the classifier with the training data.
+	 */
 	public void train() {
 		System.out.println( "Started training ..." );
 		List<DNAToken> trainSet = dataset.getTrainingSet();
+		System.out.println( "Number of training samples: " + trainSet.size() );
 		List<List<DNAToken>> docs = fromTokensToDocs(trainSet);
 		
 		System.out.println( "Number of docs: " + docs.size() );
@@ -185,6 +229,9 @@ public class TokenClassifier implements Serializable {
 		return row;
 	}
 
+	/**
+	 * Tests the classifier with the testing data and output performance statistics
+	 */
 	public void test() {
 		List<DNAToken> set = dataset.getTestSet();
 		int tp = 0;
@@ -241,6 +288,9 @@ public class TokenClassifier implements Serializable {
 		stats.getConfusionMatrix().toString();
 	}
 	
+	/**
+	 * Tests the classifier with the validation data and output performance statistics
+	 */
 	public void validate() {
 		List<DNAToken> set = dataset.getValidationSet();
 		int tp = 0;
@@ -298,9 +348,9 @@ public class TokenClassifier implements Serializable {
 	}
 	
 	/**
-	 * Each list represents the tokens of a document.
+	 * Organizes all the tokens in the collection into their respective documents.
 	 * @param tokens a list of tokens that should be grouped by documents. So the tokens of each document will be grouped in a single list.
-	 * @return a list of lists of tokens. Each list contains the tokens of a document.
+	 * @return a list of lists of tokens. Each list represents/contains the tokens of a document.
 	 */
 	public List<List<DNAToken>> fromTokensToDocs(List<DNAToken> tokens) {
 		List<List<DNAToken>> docs = new ArrayList<List<DNAToken>>();
@@ -327,6 +377,14 @@ public class TokenClassifier implements Serializable {
 		}
 		
 		return docs;
+	}
+	
+	/**
+	 * The size of the window feature space
+	 * @return
+	 */
+	public int getWindowFeatureSpaceSize() {
+		return dataset.getFeatureSpaceSize() * (2*windowSize+1);
 	}
 }
 

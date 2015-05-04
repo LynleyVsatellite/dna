@@ -67,6 +67,21 @@ public class DNATextMiner {
 		this.docsContents = new HashMap<Integer, String>();
 	}
 	
+	/**
+	 * Creates a dataset used by a @TokenClassifier
+	 * @param files a list of dna files to be used to generate training/testing/validation data
+	 * @param classLabel the named entity that shall be used as a positive class for training. 
+	 * the value of this parameter is either "Person", "Organization" or "Concept".
+	 * For example, the tokens of the statements in the dna file that are highlighted as "Person" 
+	 * will be given the positive class label, while the rest of the tokens will have the negative
+	 * class label.
+	 * @param features the features to be used for each token.
+	 * @param trainSetSize The fraction of the documents to be used for training (a number between 0.0 and 1.0.)
+	 * @param testSetSize The fraction of the documents to be used for testing (a number between 0.0 and 1.0.)
+	 * @param validationSetSize The fraction of the documents to be used for validation (a number between 0.0 and 1.0.)
+	 * @param seed the seed for the random generator for the train/test/validate split.
+	 * @return
+	 */
 	public Dataset makeDataset(List<String> files, String classLabel, List<DNAFeature> features,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
 		

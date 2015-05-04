@@ -13,16 +13,23 @@ public class DNAToken {
 	private SparseVector features;
 	//the position of the token within a document (1st token or 2nd token ... etc)
 	private int index;
-	//the id of the token in the document collection.
+	//the id of the token in the document collection. (-1 if not available, e.g. classifying a new document from outside the app)
 	private int id; 
-	//The ID of the document (per a single dna database file) that this token belongs to.
+	//The ID of the document (per a single dna database file) that this token belongs to. (-1 if not available, e.g. classifying a new document from outside the app)
 	private int docId;
 	//This id is used to identify documents when using many dna files, i.e. to avoid duplicates.
-	//in other words this is to identify the document from the entire documents collection.
+	//in other words this is to identify the document from the entire documents collection. (-1 if not available, e.g. classifying a new document from outside the app)
 	private int internalDocId;
+	//if the token has been classified then this indicates the probability that this token belongs to the positive class.
+	//if it hasn't been classifier, then it will be -1;
+	private double prediction_probability;
 	
 	public DNAToken() {
 		features = new SparseVector();
+		id = -1;
+		docId = -1;
+		internalDocId = -1;
+		prediction_probability = -1;
 	}
 	
 	public String getText() {
@@ -99,5 +106,15 @@ public class DNAToken {
 	public String toString() {
 		return getText();
 	}
+
+	public double getPrediction_probability() {
+		return prediction_probability;
+	}
+
+	public void setPrediction_probability(double prediction_probability) {
+		this.prediction_probability = prediction_probability;
+	}
+	
+	
 
 }

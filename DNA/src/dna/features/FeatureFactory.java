@@ -18,6 +18,12 @@ public class FeatureFactory {
 	private List<DNAFeature> features;
 	private Vocabulary vocab;
 	
+	/**
+	 * 
+	 * @param tokens the tokens of the documents collection
+	 * @param features the features to be used for the tokens
+	 * @param trainTestValDocsIds holds the internalDocId/s of the documents that are used for training, testing, and validation.
+	 */
 	public FeatureFactory(List<DNAToken> tokens, List<DNAFeature> features, 
 			Map<String, Set<Integer>> trainTestValDocsIds) {
 		this.tokens = tokens;
@@ -32,9 +38,6 @@ public class FeatureFactory {
 		
 		for ( int j = 0; j < features.size(); j++ ) {
 			DNAFeature f = features.get(j);
-//			for( int i = 0; i < f.numberOfFeatures(); i++ ) {
-//				featuresNames.add( j + "_" + i );
-//			}
 			this.totalNumberOfFeatures += f.numberOfFeatures();
 		}
 		
@@ -60,6 +63,10 @@ public class FeatureFactory {
 		
 	}
 	
+	/**
+	 * This gives the size of the feature space NOT the number of DNAFeature/s used!
+	 * @return
+	 */
 	public int getTotalNumberOfFeatures() {
 		return totalNumberOfFeatures;
 	}

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import weka.classifiers.functions.SimpleLogistic;
+import weka.classifiers.functions.MultilayerPerceptron;
+import weka.core.Utils;
 import dna.DNAFeature;
 import dna.DNATextMiner;
 import dna.StanfordDNATokenizer;
@@ -15,6 +16,11 @@ import dna.features.IsANumberDNAFeature;
 import dna.features.NGramDNAFeature;
 import dna.features.NumberOfCharsDNAFeature;
 import dna.features.WordDNAFeature;
+
+/**
+ * An example of how train a classifier using dna files and then how to validate or test it.
+ *
+ */
 
 public class TextMiningApp {
 
@@ -44,10 +50,21 @@ public class TextMiningApp {
 				textMiner.makeDataset(files, classLabel, features, 
 						0.6, 0.2, 0.2, 1);
 		
-		TokenClassifier clf = new TokenClassifier(dataset, new SimpleLogistic(), 1);
+		MultilayerPerceptron nn = new MultilayerPerceptron();
+		try {
+			nn.setOptions(Utils.splitOptions("-L 0.3 -M 0.2 -N 1 -S 0 -H 1"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		TokenClassifier clf = new TokenClassifier(dataset, nn, 1);
+		System.out.println( "Sample Feature Space Size: " + clf.getWindowFeatureSpaceSize() );
 		clf.train();
 		System.out.println("Done training.");
 		clf.validate();
+		//Once done optimization for parameters, then test the performance of the classifier to see how it generalizes.
+		//clf.test();
 		System.out.println( new Date() );
 	}
 	

@@ -18,6 +18,12 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
 import weka.filters.unsupervised.attribute.Normalize;
 
+/**
+ * A wrapper class to make using WEKA classifiers easy.
+ * To understand it, you need to read the MessageClassifier example in the 
+ * WEKA book. It's a modified version of that example.
+ *
+ */
 public class GeneralClassifier implements Serializable {
 
 	private static final long serialVersionUID = -7529324492164481302L;

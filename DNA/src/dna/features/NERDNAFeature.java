@@ -13,6 +13,7 @@ import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 
 /**
+ * NOTE: DON'T USE, but use @CoreNLPDNAFeature. This one is using different tokenizer.
  * A NER feature that uses the Stanford NER classifier. 
  *
  */

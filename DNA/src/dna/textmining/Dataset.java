@@ -9,6 +9,10 @@ import dna.DNAFeature;
 import dna.DNAToken;
 import dna.features.FeatureFactory;
 
+/**
+ * The dataset that is used to hold training data, testing data and validation data. 
+ *
+ */
 public class Dataset {
 
 	private FeatureFactory featureFactory;
@@ -21,6 +25,11 @@ public class Dataset {
 	//training, testing and validation.
 	Map<String, Set<Integer>> trainTestValDocsIds;
 	
+	/**
+	 * @param tokens the tokens of the documents collection
+	 * @param features the features to be used for the tokens
+	 * @param trainTestValDocsIds holds the internalDocId/s of the documents that are used for training, testing, and validation.
+	 */
 	public Dataset( List<DNAToken> tokens, List<DNAFeature> features, 
 			Map<String, Set<Integer>> trainTestValDocsIds) {
 		this.tokens = tokens;
@@ -54,18 +63,34 @@ public class Dataset {
 		}
 	}
 	
+	/**
+	 * The size of the feature space NOT the number of DNAFeature/s used!
+	 * @return
+	 */
 	public int getFeatureSpaceSize() {
 		return featureFactory.getTotalNumberOfFeatures();
 	}
 
+	/**
+	 * Returns the tokens of the documents used for training.
+	 * @return
+	 */
 	public List<DNAToken> getTrainingSet() {
 		return trainingSet;
 	}
 
+	/**
+	 * Returns the tokens of the documents used for testing.
+	 * @return
+	 */
 	public List<DNAToken> getTestSet() {
 		return testSet;
 	}
 
+	/**
+	 * Returns the tokens of the documents used for validation.
+	 * @return
+	 */
 	public List<DNAToken> getValidationSet() {
 		return validationSet;
 	}

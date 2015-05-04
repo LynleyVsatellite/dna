@@ -6,7 +6,7 @@ public interface DNATokenizer {
 
 	/**
 	 * Tokenizes the text.
-	 * @param offset the start position of the text needed to be tokenized in the document's text.
+	 * @param offset the start position of the text in the document.
 	 * @param text the text to tokenize
 	 * @return list of tokens.
 	 */
