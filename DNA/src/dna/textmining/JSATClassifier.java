@@ -9,7 +9,7 @@ public class JSATClassifier extends DNAClassifier {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void updateClassifier() {
 		// TODO Auto-generated method stub
