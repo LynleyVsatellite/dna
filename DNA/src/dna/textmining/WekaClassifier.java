@@ -24,7 +24,7 @@ import weka.filters.unsupervised.attribute.Normalize;
  * WEKA book. It's a modified version of that example.
  *
  */
-public class GeneralClassifier implements Serializable {
+public class WekaClassifier extends DNAClassifier implements Serializable {
 
 	private static final long serialVersionUID = -7529324492164481302L;
 	private Classifier classifier;
@@ -36,7 +36,7 @@ public class GeneralClassifier implements Serializable {
 	private int numbFeatures;
 	private LinkedHashSet<String> classes;
 
-	public GeneralClassifier(Classifier cl, LinkedHashSet<String>features, 
+	public WekaClassifier(Classifier cl, LinkedHashSet<String>features, 
 			LinkedHashSet<String> classes, boolean normalize) {
 		this.classifier = cl;
 		nominalToBinaryFilter = new NominalToBinary();
@@ -84,88 +84,105 @@ public class GeneralClassifier implements Serializable {
 		return sparseInstance;
 	}
 	
-	public void updateData( Map<String, Double> row, String classValue )
-			throws Exception {
-		Instance instance = makeInstance(row, data);
-		instance.setClassValue(classValue);
-		data.add(instance);
-		upToDate = false;
+	public void updateData( Map<String, Double> row, String classValue )  {
+		Instance instance;
+		try {
+			instance = makeInstance(row, data);
+			instance.setClassValue(classValue);
+			data.add(instance);
+			upToDate = false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
-	public void updateClassifier() throws Exception {
-		if ( !upToDate ) {
-			
-			nominalToBinaryFilter.setInputFormat(data);
-			nominalToBinaryFilter.setAttributeIndices("last");
-			Instances filterdInstances = Filter.useFilter(data, nominalToBinaryFilter); 
-			
-			if ( normalize ) {
-				normalizeFilter.setInputFormat(filterdInstances);
-				filterdInstances = Filter.useFilter(filterdInstances, normalizeFilter);
+	public void updateClassifier() {
+		try {
+			if ( !upToDate ) {
+				
+				nominalToBinaryFilter.setInputFormat(data);
+				nominalToBinaryFilter.setAttributeIndices("last");
+				Instances filterdInstances = Filter.useFilter(data, nominalToBinaryFilter); 
+				
+				if ( normalize ) {
+					normalizeFilter.setInputFormat(filterdInstances);
+					filterdInstances = Filter.useFilter(filterdInstances, normalizeFilter);
+				}
+				
+				System.err.println("Updating the classifier.");
+				classifier.buildClassifier(filterdInstances);
+				System.err.println("Done updating the classifier.");
+				upToDate = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String classifyInstance( Map<String, Double> row )  {
+		double predication = 0;
+		try {
+			if ( data.numInstances() == 0 ) {
+				throw new Exception( "No classifier available" );
 			}
 			
-			System.err.println("Updating the classifier.");
-			classifier.buildClassifier(filterdInstances);
-			System.err.println("Done updating the classifier.");
-			upToDate = true;
-		}
-	}
-	
-	public String classifyInstance( Map<String, Double> row ) throws Exception {
-		if ( data.numInstances() == 0 ) {
-			throw new Exception( "No classifier available" );
-		}
-		
-		if ( !upToDate ) {
-			updateClassifier();
-		}
-		
-		Instances testset = data.stringFreeStructure();
-		Instance testInstance = makeInstance(row, testset);
-		
-		nominalToBinaryFilter.input(testInstance);
-		Instance filteredInstance = nominalToBinaryFilter.output();
-		
-		if ( normalize ) {
-			normalizeFilter.input(filteredInstance);
-			filteredInstance = normalizeFilter.output();
+			if ( !upToDate ) {
+				updateClassifier();
+			}
+			
+			Instances testset = data.stringFreeStructure();
+			Instance testInstance = makeInstance(row, testset);
+			
+			nominalToBinaryFilter.input(testInstance);
+			Instance filteredInstance = nominalToBinaryFilter.output();
+			
+			if ( normalize ) {
+				normalizeFilter.input(filteredInstance);
+				filteredInstance = normalizeFilter.output();
+			}
+			
+			predication = classifier.classifyInstance(filteredInstance);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
-		double predication = classifier.classifyInstance(filteredInstance);
 		String classValue = data.classAttribute().value((int)predication);
 		return classValue;
 	}
 	
-	public Map<String, Double> distributionForInstance(Map<String, Double> row)
-		throws Exception {
+	public Map<String, Double> distributionForInstance(Map<String, Double> row) {
 		Map<String, Double> classesDists = new LinkedHashMap<String, Double>();
-		
-		if ( data.numInstances() == 0 ) {
-			throw new Exception( "No classifier available" );
-		}
-		
-		if ( !upToDate ) {
-			updateClassifier();
-		}
-		
-		Instances testset = data.stringFreeStructure();
-		Instance testInstance = makeInstance(row, testset);
-		
-		nominalToBinaryFilter.input(testInstance);
-		Instance filteredInstance = nominalToBinaryFilter.output();
-		
-		if ( normalize ) {
-			normalizeFilter.input(filteredInstance);
-			filteredInstance = normalizeFilter.output();
-		}
-		
-		double[] distributions = classifier.distributionForInstance(filteredInstance);
-		
-		int i = 0;
-		for ( String c : classes ) {
-			double classDist = distributions[i];
-			classesDists.put(c, classDist);
-			i++;
+		try {
+			if ( data.numInstances() == 0 ) {
+				throw new Exception( "No classifier available" );
+			}
+			
+			if ( !upToDate ) {
+				updateClassifier();
+			}
+			
+			Instances testset = data.stringFreeStructure();
+			Instance testInstance = makeInstance(row, testset);
+			
+			nominalToBinaryFilter.input(testInstance);
+			Instance filteredInstance = nominalToBinaryFilter.output();
+			
+			if ( normalize ) {
+				normalizeFilter.input(filteredInstance);
+				filteredInstance = normalizeFilter.output();
+			}
+			
+			double[] distributions = classifier.distributionForInstance(filteredInstance);
+			
+			int i = 0;
+			for ( String c : classes ) {
+				double classDist = distributions[i];
+				classesDists.put(c, classDist);
+				i++;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		return classesDists;
@@ -192,8 +209,8 @@ public class GeneralClassifier implements Serializable {
 //		
 //		cl.setOptions(new String[] {"-B"});
 		
-		GeneralClassifier classifier = 
-				new GeneralClassifier(new J48(), features, classes, false);
+		WekaClassifier classifier = 
+				new WekaClassifier(new J48(), features, classes, false);
 		
 		while( (line = datasetReader.readLine()) != null ) {
 			Map<String, Double> row = new LinkedHashMap<String, Double>();

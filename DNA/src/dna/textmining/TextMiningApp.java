@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import weka.classifiers.Classifier;
 import weka.classifiers.functions.MultilayerPerceptron;
+import weka.classifiers.trees.RandomForest;
 import weka.core.Utils;
 import dna.DNAFeature;
 import dna.DNATextMiner;
@@ -24,14 +26,15 @@ import dna.features.WordDNAFeature;
 
 public class TextMiningApp {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		System.out.println( "Started..." );
 		System.out.println( new Date() );
-		String file1 = "/Users/rockyrock/Desktop/s0.dna";
-//		String file1 = "/Users/rockyrock/Desktop/steffi.dna";
+		String file0 = "/Users/rockyrock/Desktop/s0.dna";
+		String file1 = "/Users/rockyrock/Desktop/steffi.dna";
 		String file2 = "/Users/rockyrock/Desktop/okt.dna";
 		List<String> files = new ArrayList<String>();
-		files.add(file1);
+		files.add(file0);
+//		files.add(file1);
 //		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
@@ -57,8 +60,10 @@ public class TextMiningApp {
 			e.printStackTrace();
 		}
 		
+		Classifier wekaClf = new RandomForest();
+		wekaClf.setOptions( Utils.splitOptions( "-I 10" ) );
 		
-		TokenClassifier clf = new TokenClassifier(dataset, nn, 1);
+		TokenClassifier clf = new TokenClassifier(dataset, wekaClf, 1);
 		System.out.println( "Sample Feature Space Size: " + clf.getWindowFeatureSpaceSize() );
 		clf.train();
 		System.out.println("Done training.");

@@ -21,12 +21,12 @@ public class TokenClassifier implements Serializable {
 	
 	private static final long serialVersionUID = -8585609561306124520L;
 	
-	private GeneralClassifier clf;
+	private DNAClassifier clf;
 	private Classifier wekaClf;
 	private Dataset dataset;
 	private boolean isTrained;
-	public static final String POSITIVE_CLASS = "P"; 
-	public static final String NEGATIVE_CLASS = "N"; 
+	public static final String POSITIVE_CLASS = DNAClassifier.POSITIVE_CLASS; 
+	public static final String NEGATIVE_CLASS = DNAClassifier.NEGATIVE_CLASS; 
 	private int windowSize;
 	private LinkedHashSet<String> featuresNames;
 	/**
@@ -62,7 +62,34 @@ public class TokenClassifier implements Serializable {
 		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * (2*windowSize+1); i++ )
 			featuresNames.add( i.toString() );
 		
-		clf = new GeneralClassifier(wekaClf, featuresNames, classes, true);
+		clf = new WekaClassifier(wekaClf, featuresNames, classes, true);
+		
+	}
+	
+	/**
+	 * 
+	 * @param dataset the dataset that holds the training, testing and validation data.
+	 * @param clf a @DNAClassifier to be used.
+	 * @param windowSize the number of tokens before and after the 
+	 * 	current token to be used for the current token's feature vector. 
+	 * 	So 1 means one token before the current token and one token after the current token.
+	 * 	And 2 means two tokens before and two tokens after. If 1 is chosen, then the size of a sample's
+	 * 	feature vector is 3 * the size of a token's feature vector (because: previous token + current token + next token).
+	 */
+	public TokenClassifier(Dataset dataset, DNAClassifier clf, int windowSize) {
+		
+		this.isTrained = false;
+		this.dataset = dataset;
+		this.windowSize = windowSize;
+		LinkedHashSet<String> classes = new LinkedHashSet<String>();
+		classes.add( POSITIVE_CLASS );
+		classes.add( NEGATIVE_CLASS );
+		featuresNames = new LinkedHashSet<String>();
+		
+		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * (2*windowSize+1); i++ )
+			featuresNames.add( i.toString() );
+		
+		this.clf = clf;
 		
 	}
 	
@@ -285,7 +312,7 @@ public class TokenClassifier implements Serializable {
 		TwoClassStats stats = new TwoClassStats(tp, fp, tn, fn);
 		System.out.println( "++++++ Testing stats ++++++" );
 		System.out.printf( "Recal: %f, Precision: %f, F1-measure: %f\n", stats.getRecall(), stats.getPrecision(), stats.getFMeasure() );
-		stats.getConfusionMatrix().toString();
+		System.out.printf( "TP: %d, TN: %d, FP: %d, FN: %d\n", tp, tn, fp, fn );
 	}
 	
 	/**
@@ -344,7 +371,7 @@ public class TokenClassifier implements Serializable {
 		TwoClassStats stats = new TwoClassStats(tp, fp, tn, fn);
 		System.out.println( "++++++ Validation stats ++++++" );
 		System.out.printf( "Recal: %f, Precision: %f, F1-measure: %f\n", stats.getRecall(), stats.getPrecision(), stats.getFMeasure() );
-		stats.getConfusionMatrix().toString();
+		System.out.printf( "TP: %d, TN: %d, FP: %d, FN: %d\n", tp, tn, fp, fn );
 	}
 	
 	/**
