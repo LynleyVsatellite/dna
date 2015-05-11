@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import weka.classifiers.Classifier;
-import weka.classifiers.functions.MultilayerPerceptron;
-import weka.classifiers.trees.RandomForest;
-import weka.core.Utils;
+import jsat.classifiers.linear.LogisticRegressionDCD;
 import dna.DNAFeature;
 import dna.DNATextMiner;
 import dna.StanfordDNATokenizer;
@@ -53,17 +50,22 @@ public class TextMiningApp {
 				textMiner.makeDataset(files, classLabel, features, 
 						0.6, 0.2, 0.2, 1);
 		
-		MultilayerPerceptron nn = new MultilayerPerceptron();
-		try {
-			nn.setOptions(Utils.splitOptions("-L 0.3 -M 0.2 -N 1 -S 0 -H 1"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		MultilayerPerceptron nn = new MultilayerPerceptron();
+//		try {
+//			nn.setOptions(Utils.splitOptions("-L 0.3 -M 0.2 -N 1 -S 0 -H 1"));
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		
+//		Classifier wekaClf = new RandomForest();
+//		wekaClf.setOptions( Utils.splitOptions( "-I 10" ) );
+//		TokenClassifier clf = new TokenClassifier(dataset, wekaClf, 1);
 		
-		Classifier wekaClf = new RandomForest();
-		wekaClf.setOptions( Utils.splitOptions( "-I 10" ) );
+		DNAClassifier dnaClf = new JSATClassifier(new LogisticRegressionDCD());
+		TokenClassifier clf = new TokenClassifier(dataset, dnaClf, 1);
 		
-		TokenClassifier clf = new TokenClassifier(dataset, wekaClf, 1);
+		
+		
 		System.out.println( "Sample Feature Space Size: " + clf.getWindowFeatureSpaceSize() );
 		clf.train();
 		System.out.println("Done training.");
@@ -74,3 +76,21 @@ public class TextMiningApp {
 	}
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

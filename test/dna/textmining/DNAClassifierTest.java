@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,47 +28,41 @@ public class DNAClassifierTest {
 			BufferedReader datasetReader = new BufferedReader( new FileReader("datasets/iris.csv") );
 			BufferedReader testsetReader = new BufferedReader( new FileReader("datasets/iris-test.csv") );
 			String line;
-
-			LinkedHashSet<String> features = new LinkedHashSet<String>();
+			int numbOfFeats = 4;
 			LinkedHashSet<String> classes = new LinkedHashSet<String>();
-
-			features.add("sepallength");
-			features.add("sepalwidth");
-			features.add("petallength");
-			features.add("petalwidth");
-
 			classes.add("Iris-setosa");
 			classes.add("Iris-versicolor");
 			classes.add("Iris-virginica");
 
 			while( (line = datasetReader.readLine()) != null ) {
-				Map<String, Double> row = new LinkedHashMap<String, Double>();
 				String[] values = line.split(",");
-
-				row.put("sepallength", Double.parseDouble(values[0]));
-				row.put("sepalwidth", Double.parseDouble(values[1]));
-				row.put("petallength", Double.parseDouble(values[2]));
-				row.put("petalwidth", Double.parseDouble(values[3]));
+				double[] vec = new double[numbOfFeats];
+				vec[0] = Double.parseDouble(values[0]);
+				vec[1] = Double.parseDouble(values[1]);
+				vec[2] = Double.parseDouble(values[2]);
+				vec[3] = Double.parseDouble(values[3]);
+				
 				String label = DNAClassifier.NEGATIVE_CLASS;
 				if ( values[4].equals( POS_ClASS ) )
 					label = DNAClassifier.POSITIVE_CLASS;
-				Sample s = new Sample( row, label );
+				Sample s = new Sample( vec, label );
 				trainDataset.add( s );
 
 			}
 
 			while( (line = testsetReader.readLine()) != null ) {
-				Map<String, Double> row = new LinkedHashMap<String, Double>();
 				String[] values = line.split(",");
-
-				row.put("sepallength", Double.parseDouble(values[0]));
-				row.put("sepalwidth", Double.parseDouble(values[1]));
-				row.put("petallength", Double.parseDouble(values[2]));
-				row.put("petalwidth", Double.parseDouble(values[3]));
+				double[] vec = new double[numbOfFeats];
+				
+				vec[0] = Double.parseDouble(values[0]);
+				vec[1] = Double.parseDouble(values[1]);
+				vec[2] = Double.parseDouble(values[2]);
+				vec[3] = Double.parseDouble(values[3]);
+				
 				String label = DNAClassifier.NEGATIVE_CLASS;
 				if ( values[4].equals( POS_ClASS ) )
 					label = DNAClassifier.POSITIVE_CLASS;
-				Sample s = new Sample( row, label );
+				Sample s = new Sample( vec, label );
 				testDataset.add( s );
 			}
 
@@ -84,10 +77,10 @@ public class DNAClassifierTest {
 	}
 
 	static class Sample {
-		Map<String, Double> row;
+		double[] vec;
 		String label;
-		public Sample( Map<String, Double> row, String label ) {
-			this.row = row;
+		public Sample( double[] vec, String label ) {
+			this.vec = vec;
 			this.label = label;
 		}
 	}

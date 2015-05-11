@@ -123,13 +123,12 @@ public class TokenClassifier implements Serializable {
 			List<SparseVector> windowVectors = getWindowVectors(tokens);
 			int i = 0;
 			for ( SparseVector vector : windowVectors ) {
-				Map<String, Double> row = getWekaVector(vector);
 				DNAToken token = tokens.get(i++);
 				
 				try {
-					String clfResult = clf.classifyInstance(row);
+					String clfResult = clf.classifyInstance(vector.toArray());
 					token.setLabel(clfResult);
-					double positive_pred_prob = clf.distributionForInstance(row).get( TokenClassifier.POSITIVE_CLASS );
+					double positive_pred_prob = clf.distributionForInstance(vector.toArray()).get( TokenClassifier.POSITIVE_CLASS );
 					token.setPrediction_probability( positive_pred_prob );
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -209,8 +208,6 @@ public class TokenClassifier implements Serializable {
 				List<SparseVector> windowVectors = getWindowVectors(docTokens);
 				int i = 0;
 				for ( SparseVector vector : windowVectors ) {
-					//construct the feature vector for weka
-					Map<String, Double> row = getWekaVector(vector);
 					DNAToken token = docTokens.get(i++);
 					String classValue = "";
 					if ( token.getLabel().equals( NEGATIVE_CLASS ) )
@@ -219,7 +216,7 @@ public class TokenClassifier implements Serializable {
 						classValue = POSITIVE_CLASS;
 					else
 						throw new RuntimeException( "Unknown class label!!" );
-					clf.updateData(row, classValue);
+					clf.updateData(vector.toArray(), classValue);
 					
 				}
 				System.out.println("Added the samples from document " + counter++);
@@ -278,8 +275,6 @@ public class TokenClassifier implements Serializable {
 					List<SparseVector> windowVectors = getWindowVectors(docTokens);
 					int i = 0;
 					for ( SparseVector vector : windowVectors ) {
-						//construct the feature vector for weka
-						Map<String, Double> row = getWekaVector(vector);
 						DNAToken token = docTokens.get(i++);
 						String classValue = "";
 						if ( token.getLabel().equals( NEGATIVE_CLASS ) )
@@ -289,7 +284,7 @@ public class TokenClassifier implements Serializable {
 						else
 							throw new RuntimeException( "Unknown class label!!" );
 						
-						String clfResult = clf.classifyInstance(row);
+						String clfResult = clf.classifyInstance(vector.toArray());
 						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
 							tp++;
 						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
@@ -337,8 +332,6 @@ public class TokenClassifier implements Serializable {
 					List<SparseVector> windowVectors = getWindowVectors(docTokens);
 					int i = 0;
 					for ( SparseVector vector : windowVectors ) {
-						//construct the feature vector for weka
-						Map<String, Double> row = getWekaVector(vector);
 						DNAToken token = docTokens.get(i++);
 						String classValue = "";
 						if ( token.getLabel().equals( NEGATIVE_CLASS ) )
@@ -348,7 +341,7 @@ public class TokenClassifier implements Serializable {
 						else
 							throw new RuntimeException( "Unknown class label!!" );
 						
-						String clfResult = clf.classifyInstance(row);
+						String clfResult = clf.classifyInstance(vector.toArray());
 						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
 							tp++;
 						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
