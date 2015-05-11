@@ -2,10 +2,8 @@ package dna.textmining;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.TwoClassStats;
@@ -22,13 +20,11 @@ public class TokenClassifier implements Serializable {
 	private static final long serialVersionUID = -8585609561306124520L;
 	
 	private DNAClassifier clf;
-	private Classifier wekaClf;
 	private Dataset dataset;
 	private boolean isTrained;
 	public static final String POSITIVE_CLASS = DNAClassifier.POSITIVE_CLASS; 
 	public static final String NEGATIVE_CLASS = DNAClassifier.NEGATIVE_CLASS; 
 	private int windowSize;
-	private LinkedHashSet<String> featuresNames;
 	/**
 	 * Creates a TokenClassifier with a default Logistic Regression classifier and window size of 1 token
 	 *  (i.e one token before the current token and one after).
@@ -52,12 +48,11 @@ public class TokenClassifier implements Serializable {
 		
 		this.isTrained = false;
 		this.dataset = dataset;
-		this.wekaClf = wekaClf;
 		this.windowSize = windowSize;
 		LinkedHashSet<String> classes = new LinkedHashSet<String>();
 		classes.add( POSITIVE_CLASS );
 		classes.add( NEGATIVE_CLASS );
-		featuresNames = new LinkedHashSet<String>();
+		LinkedHashSet<String> featuresNames = new LinkedHashSet<String>();
 		
 		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * (2*windowSize+1); i++ )
 			featuresNames.add( i.toString() );
@@ -81,13 +76,6 @@ public class TokenClassifier implements Serializable {
 		this.isTrained = false;
 		this.dataset = dataset;
 		this.windowSize = windowSize;
-		LinkedHashSet<String> classes = new LinkedHashSet<String>();
-		classes.add( POSITIVE_CLASS );
-		classes.add( NEGATIVE_CLASS );
-		featuresNames = new LinkedHashSet<String>();
-		
-		for ( Integer i = 0; i < dataset.getFeatureSpaceSize() * (2*windowSize+1); i++ )
-			featuresNames.add( i.toString() );
 		
 		this.clf = clf;
 		
@@ -223,35 +211,35 @@ public class TokenClassifier implements Serializable {
 			}
 			
 			clf.updateClassifier();
-			
+//			clf.save();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		isTrained = true;
 	}
 	
-	/**
-	 * Converts a SparseVector to a format appropriate for use by the GeneralClassifier.
-	 * @param vector a sparse feature vector.
-	 * @return
-	 */
-	private Map<String, Double> getWekaVector(SparseVector vector) {
-		Map<String, Double> row = new HashMap<String, Double>();
-		
-		if ( vector.size() != featuresNames.size() )
-			throw new RuntimeException( "The size of the feature vector is different from the number of features!" );
-		else {
-
-			int i = 0; 
-			for ( String featureName : featuresNames ) {
-				row.put(featureName, vector.get(i));
-				i++;
-			}
-			
-		}
-		
-		return row;
-	}
+//	/**
+//	 * Converts a SparseVector to a format appropriate for use by the GeneralClassifier.
+//	 * @param vector a sparse feature vector.
+//	 * @return
+//	 */
+//	private Map<String, Double> getWekaVector(SparseVector vector) {
+//		Map<String, Double> row = new HashMap<String, Double>();
+//		
+//		if ( vector.size() != featuresNames.size() )
+//			throw new RuntimeException( "The size of the feature vector is different from the number of features!" );
+//		else {
+//
+//			int i = 0; 
+//			for ( String featureName : featuresNames ) {
+//				row.put(featureName, vector.get(i));
+//				i++;
+//			}
+//			
+//		}
+//		
+//		return row;
+//	}
 
 	/**
 	 * Tests the classifier with the testing data and output performance statistics

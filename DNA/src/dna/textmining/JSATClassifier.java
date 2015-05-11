@@ -1,5 +1,6 @@
 package dna.textmining;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,10 +13,17 @@ import jsat.datatransform.DataTransform;
 import jsat.datatransform.LinearTransform;
 import jsat.linear.SparseVector;
 import jsat.linear.Vec;
+import weka.core.SerializationHelper;
 import dna.Utils;
 
-public class JSATClassifier extends DNAClassifier {
+/**
+ * Do NOT use this classifier. Something is strange because the classifier is never able to make correct predictions! 
+ *
+ */
 
+public class JSATClassifier extends DNAClassifier implements Serializable {
+
+	private static final long serialVersionUID = -5352005109028350668L;
 	private Classifier clf;
 	private ClassificationDataSet trainSet;
 	private boolean upToDate;
@@ -86,6 +94,15 @@ public class JSATClassifier extends DNAClassifier {
 		results.put( DNAClassifier.POSITIVE_CLASS, result.getProb(1) );
 		results.put( DNAClassifier.NEGATIVE_CLASS, result.getProb(0) );
 		return results;
+	}
+
+	@Override
+	public void save() {
+		try {
+			SerializationHelper.write("JSAT_CLF", this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

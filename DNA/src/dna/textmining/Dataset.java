@@ -1,5 +1,6 @@
 package dna.textmining;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,9 @@ import dna.features.FeatureFactory;
  * The dataset that is used to hold training data, testing data and validation data. 
  *
  */
-public class Dataset {
+public class Dataset implements Serializable {
 
+	private static final long serialVersionUID = -1506597078873587149L;
 	private FeatureFactory featureFactory;
 	private List<DNAToken> trainingSet;
 	private List<DNAToken> testSet;

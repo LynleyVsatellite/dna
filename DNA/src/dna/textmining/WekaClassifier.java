@@ -14,6 +14,7 @@ import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.SparseInstance;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
@@ -274,7 +275,26 @@ public class WekaClassifier extends DNAClassifier implements Serializable {
 		
 		return distributionForInstance(row);
 	}
+	
+	@Override
+	public void save() {
+		try {
+			SerializationHelper.write("WEKA_CLF", this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
+	public Classifier getClassifier() {
+		return classifier;
+	}
+
+	public void setClassifier(Classifier classifier) {
+		this.classifier = classifier;
+	}
+
+	
+	
 }
 
 

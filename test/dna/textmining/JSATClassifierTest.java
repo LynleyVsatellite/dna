@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import jsat.classifiers.Classifier;
 import jsat.classifiers.linear.LinearSGD;
 import jsat.classifiers.linear.LogisticRegressionDCD;
 import jsat.lossfunctions.HingeLoss;
@@ -25,9 +26,9 @@ public class JSATClassifierTest {
 //        GradientUpdater gu = new SimpleSGD();
 //        linearsgd.setGradientUpdater(gu);
         
-		LogisticRegressionDCD lr = new LogisticRegressionDCD();
+		Classifier jsatClf = new LogisticRegressionDCD();
 		
-		DNAClassifier clf = new JSATClassifier(lr);
+		DNAClassifier clf = new JSATClassifier(jsatClf);
 		Map<String, List<Sample>> datasets1 = DNAClassifierTest.getDataset("Iris-setosa");
 		Map<String, List<Sample>> datasets2 = DNAClassifierTest.getDataset("Iris-versicolor");
 		Map<String, List<Sample>> datasets3 = DNAClassifierTest.getDataset("Iris-virginica");
