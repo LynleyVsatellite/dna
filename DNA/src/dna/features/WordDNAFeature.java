@@ -82,6 +82,7 @@ public class WordDNAFeature extends DNAFeature implements VocabularyDependent {
 	public int numberOfFeatures() {
 		if(vocab == null)
 			throw new RuntimeException("A vocabulary is not set to get the number of features!");
+		System.out.println( "Number of WORD features: " + vocab.getSize() );
 		return vocab.getSize();
 	}
 

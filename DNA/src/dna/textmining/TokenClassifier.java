@@ -114,9 +114,9 @@ public class TokenClassifier implements Serializable {
 				DNAToken token = tokens.get(i++);
 				
 				try {
-					String clfResult = clf.classifyInstance(vector.toArray());
+					String clfResult = clf.classifyInstance(vector);
 					token.setLabel(clfResult);
-					double positive_pred_prob = clf.distributionForInstance(vector.toArray()).get( TokenClassifier.POSITIVE_CLASS );
+					double positive_pred_prob = clf.distributionForInstance(vector).get( TokenClassifier.POSITIVE_CLASS );
 					token.setPrediction_probability( positive_pred_prob );
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -204,7 +204,7 @@ public class TokenClassifier implements Serializable {
 						classValue = POSITIVE_CLASS;
 					else
 						throw new RuntimeException( "Unknown class label!!" );
-					clf.updateData(vector.toArray(), classValue);
+					clf.updateData(vector, classValue);
 					
 				}
 				System.out.println("Added the samples from document " + counter++);
@@ -272,7 +272,7 @@ public class TokenClassifier implements Serializable {
 						else
 							throw new RuntimeException( "Unknown class label!!" );
 						
-						String clfResult = clf.classifyInstance(vector.toArray());
+						String clfResult = clf.classifyInstance(vector);
 						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
 							tp++;
 						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
@@ -329,7 +329,7 @@ public class TokenClassifier implements Serializable {
 						else
 							throw new RuntimeException( "Unknown class label!!" );
 						
-						String clfResult = clf.classifyInstance(vector.toArray());
+						String clfResult = clf.classifyInstance(vector);
 						if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( POSITIVE_CLASS ) ) 
 							tp++;
 						else if ( classValue.equals( POSITIVE_CLASS ) && clfResult.equals( NEGATIVE_CLASS ) ) 
@@ -391,8 +391,107 @@ public class TokenClassifier implements Serializable {
 	 * The size of the window feature space
 	 * @return
 	 */
-	public int getWindowFeatureSpaceSize() {
+	public int getSampleFeatureSpaceSize() {
 		return dataset.getFeatureSpaceSize() * (2*windowSize+1);
+	}
+	
+	/**
+	 * This method generates training, testing and validation sets and writes them into three ARFF files.
+	 */
+	public void toARFF() {
+		System.out.println( "Creating ARFF files ..." );
+		
+		System.out.println( "Now generating training samples ..." );
+		ARFFExporter arffExporter = new ARFFExporter("trainSet.arff", getSampleFeatureSpaceSize());
+		List<DNAToken> trainSet = dataset.getTrainingSet();
+		System.out.println( "Number of training samples: " + trainSet.size() );
+		List<List<DNAToken>> docs = fromTokensToDocs(trainSet);
+		
+		System.out.println( "Number of docs: " + docs.size() );
+		int counter = 0;
+		
+		try {
+			for (List<DNAToken> docTokens : docs) {
+				List<SparseVector> windowVectors = getWindowVectors(docTokens);
+				int i = 0;
+				for ( SparseVector vector : windowVectors ) {
+					DNAToken token = docTokens.get(i++);
+					int classValue = 0;
+					if ( token.getLabel().equals( NEGATIVE_CLASS ) )
+						classValue = 0;
+					else if ( token.getLabel().equals( POSITIVE_CLASS ) )
+						classValue = 1;
+					else
+						throw new RuntimeException( "Unknown class label!!" );
+					arffExporter.append(vector.toArray(), classValue);
+					
+				}
+				System.out.println("Added the samples from document " + counter++);
+			}
+			
+			arffExporter.close();
+			
+			System.out.println( "Now generating validation samples ..." );
+			arffExporter = new ARFFExporter("validationSet.arff", getSampleFeatureSpaceSize());
+			List<DNAToken> set = dataset.getValidationSet();
+			
+			System.out.println( "Number of validation samples: " + set.size() );
+			docs = fromTokensToDocs(set);
+			
+			System.out.println( "Number of docs: " + docs.size() );
+			counter = 0;
+			for (List<DNAToken> docTokens : docs) {
+				List<SparseVector> windowVectors = getWindowVectors(docTokens);
+				int i = 0;
+				for ( SparseVector vector : windowVectors ) {
+					DNAToken token = docTokens.get(i++);
+					int classValue = 0;
+					if ( token.getLabel().equals( NEGATIVE_CLASS ) )
+						classValue = 0;
+					else if ( token.getLabel().equals( POSITIVE_CLASS ) )
+						classValue = 1;
+					else
+						throw new RuntimeException( "Unknown class label!!" );
+					arffExporter.append(vector.toArray(), classValue);
+					
+				}
+				System.out.println("Added the samples from document " + counter++);
+			}
+			arffExporter.close();
+			
+			System.out.println( "Now generating testing samples ..." );
+			arffExporter = new ARFFExporter("testSet.arff", getSampleFeatureSpaceSize());
+			set = dataset.getTestSet();
+			
+			System.out.println( "Number of test samples: " + set.size() );
+			docs = fromTokensToDocs(set);
+			
+			System.out.println( "Number of docs: " + docs.size() );
+			counter = 0;
+			for (List<DNAToken> docTokens : docs) {
+				List<SparseVector> windowVectors = getWindowVectors(docTokens);
+				int i = 0;
+				for ( SparseVector vector : windowVectors ) {
+					DNAToken token = docTokens.get(i++);
+					int classValue = 0;
+					if ( token.getLabel().equals( NEGATIVE_CLASS ) )
+						classValue = 0;
+					else if ( token.getLabel().equals( POSITIVE_CLASS ) )
+						classValue = 1;
+					else
+						throw new RuntimeException( "Unknown class label!!" );
+					arffExporter.append(vector.toArray(), classValue);
+					
+				}
+				System.out.println("Added the samples from document " + counter++);
+			}
+			arffExporter.close();
+			
+			System.out.println( "Done creating ARFF files." );
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
 

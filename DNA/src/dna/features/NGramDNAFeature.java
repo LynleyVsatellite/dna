@@ -135,6 +135,7 @@ public class NGramDNAFeature extends DNAFeature implements VocabularyDependent {
 	public int numberOfFeatures() {
 		if(vocab == null)
 			throw new RuntimeException("A vocabulary is not set to build the features!");
+		System.out.println( "Number of nGrams features: " + nGrams.size() );
 		return nGrams.size();
 	}
 }

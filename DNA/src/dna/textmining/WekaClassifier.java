@@ -19,6 +19,7 @@ import weka.core.SparseInstance;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
 import weka.filters.unsupervised.attribute.Normalize;
+import dna.features.SparseVector;
 
 /**
  * A wrapper class to make using WEKA classifiers easy.
@@ -244,7 +245,8 @@ public class WekaClassifier extends DNAClassifier implements Serializable {
 	}
 
 	@Override
-	public void updateData(double[] vec, String classValue) {
+	public void updateData(SparseVector sparseVector, String classValue) {
+		double[] vec = sparseVector.toArray();
 		Map<String, Double> row = new HashMap<>();
 
 		for ( Integer i = 0; i < vec.length; i++ ) {
@@ -255,7 +257,9 @@ public class WekaClassifier extends DNAClassifier implements Serializable {
 	}
 
 	@Override
-	public String classifyInstance(double[] vec) {
+	public String classifyInstance(SparseVector sparseVector) {
+		
+		double[] vec = sparseVector.toArray();
 		Map<String, Double> row = new HashMap<>();
 
 		for ( Integer i = 0; i < vec.length; i++ ) {
@@ -266,7 +270,8 @@ public class WekaClassifier extends DNAClassifier implements Serializable {
 	}
 
 	@Override
-	public Map<String, Double> distributionForInstance(double[] vec) {
+	public Map<String, Double> distributionForInstance(SparseVector sparseVector) {
+		double[] vec = sparseVector.toArray();
 		Map<String, Double> row = new HashMap<>();
 
 		for ( Integer i = 0; i < vec.length; i++ ) {

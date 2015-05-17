@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import jsat.classifiers.svm.LSSVM;
-import jsat.classifiers.svm.SupportVectorLearner;
-import jsat.distributions.kernels.RBFKernel;
+import ml.classification.LogisticRegression;
 import dna.DNAFeature;
 import dna.DNATextMiner;
 import dna.StanfordDNATokenizer;
@@ -55,19 +53,26 @@ public class TextMiningApp {
 		
 //		LinearL1SCD( 10000, 1e-14, Loss.SQUARED )
 		
-		jsat.classifiers.Classifier jsatClf = new LSSVM(new RBFKernel(0.5), SupportVectorLearner.CacheMode.FULL);
-		TokenClassifier clf = new TokenClassifier(dataset, new JSATClassifier( jsatClf ), 1);
+//		jsat.classifiers.Classifier jsatClf = new LSSVM(new RBFKernel(0.5), SupportVectorLearner.CacheMode.FULL);
+//		TokenClassifier clf = new TokenClassifier(dataset, new JSATClassifier( jsatClf ), 1);
 		
 //		RandomForest f = new RandomForest();
-//		f.setOptions( Utils.splitOptions("-I 20") );
+//		f.setOptions( Utils.splitOptions("-I 20 -S 0") );
 //		TokenClassifier clf = new TokenClassifier(dataset, f, 1);
-		
+//		clf.toARFF();
 //		DNAClassifier dnaClf = new JSATClassifier(new LogisticRegressionDCD());
 //		TokenClassifier clf = new TokenClassifier(dataset, dnaClf, 1);
 		
-		System.out.println( "Sample Feature Space Size: " + clf.getWindowFeatureSpaceSize() );
+		int regularizationType = 0;
+		double lambda = 0;
+		
+		ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+		LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
+		TokenClassifier clf = new TokenClassifier(dataset, lamlClf, 1);
+		
+		System.out.println( "Sample Feature Space Size: " + clf.getSampleFeatureSpaceSize() );
 		clf.train();
-		System.out.println("Done training.");
+//		System.out.println("Done training.");
 		clf.validate();
 		//Once done optimization for parameters, then test the performance of the classifier to see how it generalizes.
 		//clf.test();

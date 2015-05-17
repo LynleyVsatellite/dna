@@ -1,23 +1,48 @@
 package dna.features;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import dna.textmining.ListUtils;
 
 /**
  * An implementation of a sparse vector to hold the feature vectors.
  * 
  */
 
+//TODO add put() to make creating a sparse vector with couple elements fast
+
 public class SparseVector implements Iterable<Double> {
 	
 	private Map<Integer, Double> ST;
 	private int currentIndex;
 	
-	public SparseVector( int size ) {
-		ST = new HashMap<Integer, Double>();
+	/**
+	 * 
+	 * @param size the size of the vector. 
+	 * Note that this corresponds to the total number of values (sparse and non-sparse) in this vector.
+	 * @param indices the indices of the non-zero elements.
+	 * @param values the non-zero elements. Note that {@code values} and {@code indices} must have the same length.
+	 */
+	public SparseVector( int size, int[] indices, double[] values ) {
+		ST = new LinkedHashMap<Integer, Double>();
 		currentIndex = size;
+		
+		if ( indices.length != values.length )
+			throw new RuntimeException( "The number of values and indices is not the same!" );
+		
+		if ( size < values.length )
+			throw new RuntimeException( "The size of the vector is less than the number of non-sparse values!" );
+		
+		for ( int i = 0; i < values.length; i++ ) {
+			ST.put(indices[i], values[i]);
+		}
+	}
+	
+	public SparseVector( int size ) {
+		this(size, new int[0], new double[0]);
 	}
 	
 	public SparseVector() {
@@ -125,6 +150,27 @@ public class SparseVector implements Iterable<Double> {
 		}
 		
 	}
+	
+	/**
+	 * Returns the indices of the non-sparse values.
+	 * @return
+	 */
+	public int[] getIndices() {
+		return ListUtils.asIntArray(ST.keySet());
+	}
 
+	/**
+	 * Returns the non-sparse values.
+	 * @return
+	 */
+	public double[] getNonSparseValues() {
+		double[] v = new double[ ST.size() ];
+		int i = 0;
+		for ( int key : ST.keySet() ) {
+			v[i++] = ST.get(key);
+		}
+		
+		return v;
+	}
 
 }
