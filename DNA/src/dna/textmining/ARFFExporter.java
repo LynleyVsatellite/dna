@@ -4,10 +4,21 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * A class to export a sparse dataset into the ARFF file format.
+ * It exports all feature vectors in the sparse ARFF format. 
+ *
+ */
 public class ARFFExporter {
 	
 	private BufferedWriter bw;
 	
+	/**
+	 * @param filename the name and location of the ARFF file to be saved. 
+	 * @param numberOfFeatures the number of features in each feature vector. Note that the class label
+	 * will be saved as an extra attribute in the ARFF file. So the total number of attributes in the ARFF file will
+	 * be {@code numberOfFeatures+1 }. The class label attribute is saved as a numerical attribute.
+	 */
 	public ARFFExporter(String filename, int numberOfFeatures) {
 		try {
 			bw = new BufferedWriter( new FileWriter(filename) );
@@ -26,6 +37,11 @@ public class ARFFExporter {
 		
 	}
 	
+	/**
+	 * Appends a feature vector to the ARFF file. Call this method for every feature vector.
+	 * @param array the feature vector
+	 * @param label the class label (1.0 for positive and 0.0 for negative). 
+	 */
 	public void append(double[] array, int label) {
 		try {
 			bw.write( "{" );

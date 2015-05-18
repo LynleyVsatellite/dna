@@ -17,12 +17,10 @@ import dna.features.FeatureFactory;
 public class Dataset implements Serializable {
 
 	private static final long serialVersionUID = -1506597078873587149L;
-	private FeatureFactory featureFactory;
-	private List<DNAToken> trainingSet;
-	private List<DNAToken> testSet;
-	private List<DNAToken> validationSet;
-	private List<DNAToken> tokens;
-	private List<DNAFeature> features;
+	private FeatureFactory featureFactory;//responsible for generating the features for the tokens.
+	private List<DNAToken> trainingSet;//holds the tokens used for training the classifier.
+	private List<DNAToken> testSet;//holds the tokens used for testing the classifier.
+	private List<DNAToken> validationSet;//holds the tokens used for validating the classifier.
 	//Holds the internal ids of the documents that are used for:
 	//training, testing and validation.
 	Map<String, Set<Integer>> trainTestValDocsIds;
@@ -34,8 +32,6 @@ public class Dataset implements Serializable {
 	 */
 	public Dataset( List<DNAToken> tokens, List<DNAFeature> features, 
 			Map<String, Set<Integer>> trainTestValDocsIds) {
-		this.tokens = tokens;
-		this.features = features;
 		this.trainTestValDocsIds = trainTestValDocsIds;
 		
 		featureFactory = new FeatureFactory(tokens, features, trainTestValDocsIds);

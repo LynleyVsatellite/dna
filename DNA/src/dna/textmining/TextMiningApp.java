@@ -30,9 +30,9 @@ public class TextMiningApp {
 		String file1 = "/Users/rockyrock/Desktop/steffi.dna";
 		String file2 = "/Users/rockyrock/Desktop/okt.dna";
 		List<String> files = new ArrayList<String>();
-		files.add(file0);
-//		files.add(file1);
-//		files.add(file2);
+//		files.add(file0);
+		files.add(file1);
+		files.add(file2);
 		String classLabel = "Person";
 		DNATextMiner textMiner = new DNATextMiner( new StanfordDNATokenizer() );
 		
@@ -75,7 +75,7 @@ public class TextMiningApp {
 //		System.out.println("Done training.");
 		clf.validate();
 		//Once done optimization for parameters, then test the performance of the classifier to see how it generalizes.
-		//clf.test();
+		clf.test();
 		System.out.println( new Date() );
 	}
 	
