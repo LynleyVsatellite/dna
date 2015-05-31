@@ -64,7 +64,7 @@ public class TokenClassifier implements Serializable {
 	/**
 	 * 
 	 * @param dataset the dataset that holds the training, testing and validation data.
-	 * @param clf a @DNAClassifier to be used.
+	 * @param clf a {@link DNAClassifier} to be used.
 	 * @param windowSize the number of tokens before and after the 
 	 * 	current token to be used for the current token's feature vector. 
 	 * 	So 1 means one token before the current token and one token after the current token.
@@ -185,10 +185,10 @@ public class TokenClassifier implements Serializable {
 	public void train() {
 		System.out.println( "Started training ..." );
 		List<DNAToken> trainSet = dataset.getTrainingSet();
-		System.out.println( "Number of training samples: " + trainSet.size() );
+//		System.out.println( "Number of training samples: " + trainSet.size() );
 		List<List<DNAToken>> docs = fromTokensToDocs(trainSet);
 		
-		System.out.println( "Number of docs: " + docs.size() );
+//		System.out.println( "Number of docs: " + docs.size() );
 		int counter = 0;
 		
 		try {
@@ -207,7 +207,7 @@ public class TokenClassifier implements Serializable {
 					clf.updateData(vector, classValue);
 					
 				}
-				System.out.println("Added the samples from document " + counter++);
+//				System.out.println("Added the samples from document " + counter++);
 			}
 			
 			clf.updateClassifier();

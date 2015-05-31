@@ -44,7 +44,7 @@ public class DNATextMiner {
 		
 		List<DNAFeature> features = new ArrayList<DNAFeature>();
 		features.add( new HasCapitalLetterDNAFeature() );
-		features.add( new CoreNLPDNAFeature() );
+		features.add( new CoreNLPDNAFeature(true,true) );
 		features.add( new HasWeirdCharDNAFeature() );
 		features.add( new AllCapitalizedDNAFeature() );
 		features.add( new IsANumberDNAFeature() );
@@ -314,7 +314,7 @@ public class DNATextMiner {
 				internalDocId++;
 				allTokens.addAll(docTokens);
 				
-				System.out.println( "Processed doc: " + counter );
+//				System.out.println( "Processed doc: " + counter );
 				counter++;
 //				if(counter == 2) break;
 			}

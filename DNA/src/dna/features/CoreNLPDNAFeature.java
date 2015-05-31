@@ -25,9 +25,9 @@ import edu.stanford.nlp.util.CoreMap;
 public class CoreNLPDNAFeature extends DNAFeature {
 	
 	private static final String ner_tagger = 
-			"/Users/rockyrock/git/dna/DNA/src/dna/features/models/hgc_175m_600.crf.ser.gz";
+			"models/hgc_175m_600.crf.ser.gz";
 	private static final String pos_tagger = 
-			"/Users/rockyrock/git/dna/DNA/src/dna/features/models/german-hgc.tagger";
+			"models/german-hgc.tagger";
 	private static final String[] posTagsList = 
 		{ "ADJA", "ADJD", "ADV", "APPR", "APPRART", "APPO", "APZR", "ART", "CARD",
 		"FM", "ITJ", "KOUI", "KOUS", "KON", "KOKOM", "NN", "NE", "PDS", "PDAT", "PIS", "PIAT",
@@ -37,8 +37,10 @@ public class CoreNLPDNAFeature extends DNAFeature {
 		"XY", "$,", "$.", "$("}; 
 	private static final int NER_NUMB_FEATURES = 4;
 	private StanfordCoreNLP pipeline;
+	private boolean useNERFeatures;
+	private boolean usePOSFeatures;
 	
-	public CoreNLPDNAFeature() {
+	public CoreNLPDNAFeature(boolean useNERFeatures, boolean usePOSFeatures) {
 		Properties props = new Properties();
 	    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner");
 	    props.setProperty( "tokenize.whitespace", "true" );
@@ -47,6 +49,10 @@ public class CoreNLPDNAFeature extends DNAFeature {
 	    props.setProperty( "ner.model", ner_tagger );
 	    props.setProperty( "ner.useSUTime", "false" );
 		pipeline = new StanfordCoreNLP(props);
+		
+		this.useNERFeatures = useNERFeatures;
+		this.usePOSFeatures = usePOSFeatures;
+		
 	}
 
 	@Override
@@ -112,8 +118,18 @@ public class CoreNLPDNAFeature extends DNAFeature {
 									else if ( nerTag.equals( "I-MISC" ) || nerTag.equals( "O-MISC" ) )
 										ner_features[3] = 1;
 				    				
-				    				docDNAToken.getFeatures().addAll( Utils.asList(pos_features) );
-				    				docDNAToken.getFeatures().addAll( Utils.asList(ner_features) );
+//				    				docDNAToken.getFeatures().addAll( Utils.asList(pos_features) );
+//				    				docDNAToken.getFeatures().addAll( Utils.asList(ner_features) );
+				    				
+				    				if ( useNERFeatures==true && usePOSFeatures==false )
+				    					docDNAToken.getFeatures().addAll( Utils.asList(ner_features) );
+				    				else if ( useNERFeatures==false && usePOSFeatures==true )
+				    					docDNAToken.getFeatures().addAll( Utils.asList(pos_features) );
+				    				else if( useNERFeatures==true && usePOSFeatures==true ) {
+				    					docDNAToken.getFeatures().addAll( Utils.asList(pos_features) );
+					    				docDNAToken.getFeatures().addAll( Utils.asList(ner_features) );
+				    				}
+				    				
 				    			}
 				    			
 				    		}
@@ -135,7 +151,14 @@ public class CoreNLPDNAFeature extends DNAFeature {
 
 	@Override
 	public int numberOfFeatures() {
-		return posTagsList.length + NER_NUMB_FEATURES;
+		if ( useNERFeatures==true && usePOSFeatures==false )
+			return NER_NUMB_FEATURES;
+		else if ( useNERFeatures==false && usePOSFeatures==true )
+			return posTagsList.length;
+		else if( useNERFeatures==true && usePOSFeatures==true )
+			return posTagsList.length + NER_NUMB_FEATURES;
+		else
+			return 0;
 	}
 
 

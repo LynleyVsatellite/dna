@@ -15,22 +15,30 @@ public class LAMLClassifier extends DNAClassifier {
 	private ml.classification.Classifier clf;
 	private List<SparseVector> data;
 	private List<Integer> labels;
+	private boolean allowUpdate;
 	
 	public LAMLClassifier(ml.classification.Classifier clf) {
 		this.clf = clf;
 		data = new ArrayList<SparseVector>();
 		labels = new ArrayList<Integer>();
+		allowUpdate = true;
 	}
 
 
 	@Override
 	public void updateData(SparseVector vec, String classValue) {
-		data.add(vec);
-		if ( classValue.equals( DNAClassifier.POSITIVE_CLASS ) )
-			labels.add(1);
-		else
-			labels.add(0);
-		upToDate = false;
+		if (allowUpdate) {
+			data.add(vec);
+			if ( classValue.equals( DNAClassifier.POSITIVE_CLASS ) )
+				labels.add(1);
+			else
+				labels.add(0);
+			upToDate = false;
+		}
+		else {
+			throw new RuntimeException( "You can't change the data after training the classifier. You need to create a new classifier." );
+		}
+		
 	}
 
 	public void updateClassifier() {
@@ -40,6 +48,9 @@ public class LAMLClassifier extends DNAClassifier {
 			clf.feedLabels(ListUtils.asIntArray(labels));
 			clf.train();
 			upToDate = true;
+			allowUpdate = false;
+			data.clear();//to free the memory!
+			labels.clear();
 		}
 	}
 
