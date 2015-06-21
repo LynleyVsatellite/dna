@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import ml.classification.LogisticRegression;
+import ml.classification.LinearBinarySVM;
 import dna.DNAFeature;
 import dna.DNATextMiner;
 import dna.StanfordDNATokenizer;
 import dna.features.AllCapitalizedDNAFeature;
-import dna.features.CoreNLPDNAFeature;
 import dna.features.HasCapitalLetterDNAFeature;
 import dna.features.HasWeirdCharDNAFeature;
 import dna.features.IsANumberDNAFeature;
@@ -23,15 +22,15 @@ public class Experiements {
 		int option = Integer.parseInt(args[0]);
 		
 		if ( option == 1 ) { //Person
-			for ( int i = 0; i < 6; i++ )
+			for ( int i = 0; i < 3; i++ )
 				exp1( "Person", i );
 		}
 		else if( option == 2 ) { //Org
-			for ( int i = 0; i < 6; i++ )
+			for ( int i = 0; i < 3; i++ )
 				exp1( "Organization", i );
 		}
 		else if ( option == 3 ) { //Concept
-			for ( int i = 0; i < 6; i++ )
+			for ( int i = 0; i < 3; i++ )
 				exp1( "Concept", i );
 		}
 		else {
@@ -55,7 +54,7 @@ public class Experiements {
 		
 		List<DNAFeature> features = new ArrayList<DNAFeature>();
 		features.add( new HasCapitalLetterDNAFeature() );
-		features.add( new CoreNLPDNAFeature(true, true) );
+//		features.add( new CoreNLPDNAFeature(true, true) );
 		features.add( new HasWeirdCharDNAFeature() );
 		features.add( new AllCapitalizedDNAFeature() );
 		features.add( new IsANumberDNAFeature() );
@@ -81,12 +80,17 @@ public class Experiements {
 			
 			Dataset dataset = 
 					textMiner.makeDataset(files, classLabel, tempFeatures, 
-							0.6, 0.2, 0.2, 1);
+							0.6, 0.2, 0.2, 1, false);
 			
 			int regularizationType = 0;
 			double lambda = 0;
 			
-			ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+//			ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+			
+			double C = 1.0;
+			double eps = 1e-4;
+			ml.classification.Classifier lamlOrigClf = new LinearBinarySVM(C, eps);
+			
 			LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
 			TokenClassifier clf = new TokenClassifier(dataset, lamlClf, windowSize);
 			
