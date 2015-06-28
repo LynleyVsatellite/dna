@@ -31,13 +31,15 @@ public class PreprocessingFourthTask {
 					approvedStatements.add(st);
 				}
 				else if (st.getType().equals("Person") || st.getType().equals("Organization")) {
-					//TODO filter away interconnected highlighted text!!!
 					actorStatements.add(st);
 				}
 				else if (st.getType().equals("Concept")) {
 					conceptStatements.add(st);
 				}
 			}
+			
+			removeInnerStatements(actorStatements);
+			removeInnerStatements(conceptStatements);
 			
 			//TODO ignore approved statements if there are no actor or concepts in them at all!
 			//Find the actors and concepts within each ApprovedStatement
@@ -83,13 +85,8 @@ public class PreprocessingFourthTask {
 					Collections.sort( highlightedTextStartPositions );
 					Map<Integer, Integer> nonHighlightedTextPositions = new HashMap<Integer, Integer>();
 					
-					for ( int i = 0; i < highlightedTextStartPositions.size(); i++ ) {
+					for ( int i = 0; i < highlightedTextStartPositions.size() - 1; i++ ) {
 						int startPosition = highlightedTextStartPositions.get(i);
-						
-						if ( startPosition != 0 ) {
-							//DO something
-						}
-						
 						int endPosition;
 						if ( actorsPositions.containsKey(startPosition) ) {
 							endPosition = actorsPositions.get(startPosition);
@@ -98,10 +95,70 @@ public class PreprocessingFourthTask {
 							endPosition = conceptsPositions.get(startPosition);
 						}
 						
+						int subsequentStartPosition = highlightedTextStartPositions.get(i+1);
+						nonHighlightedTextPositions.put(endPosition, subsequentStartPosition);
+					}
+					
+					//Check for the part before the first highlighted text segment
+					if ( highlightedTextStartPositions.get(0) != approvedStatement.getStart() ) {
+						int nonHighlightedTextStartPosition = approvedStatement.getStart();
+						int nonHighlightedTextEndPosition = highlightedTextStartPositions.get(0);
+						nonHighlightedTextPositions.put(nonHighlightedTextStartPosition, nonHighlightedTextEndPosition);
+					}
+					
+					//Check for the part after the last highlighted text segment
+					int lastHighlightedTextStartPosition = highlightedTextStartPositions.get(
+															highlightedTextStartPositions.size()-1  );
+					int lastHighlightedTextEndPosition;
+					if ( actorsPositions.containsKey(lastHighlightedTextStartPosition) ) {
+						lastHighlightedTextEndPosition = actorsPositions.get(lastHighlightedTextStartPosition);
+					}
+					else {
+						lastHighlightedTextEndPosition = conceptsPositions.get(lastHighlightedTextStartPosition);
+					}
+					
+					if ( lastHighlightedTextEndPosition != approvedStatement.getStop() ) {
+						int lastNonHighlightedTextStartPosition = lastHighlightedTextEndPosition;
+						int lastNonHighlightedTextEndPosition = approvedStatement.getStop();
+						nonHighlightedTextPositions.put(lastNonHighlightedTextStartPosition,
+								lastNonHighlightedTextEndPosition);
 					}
 					
 				}
 			}
+		}
+		
+	}
+	
+	/**
+	 * Removes the statements that fall in a larger statement range. In other words,
+	 * if a statement is highlighted and is part of a wider highlighted statement from the same category,
+	 * then only the wider statement is used. For example, the statement "Mr.X" can be highlighted 
+	 * as a Person and the statement "The minister of defense Mr.X" is also highlighted as a statement.
+	 * This methods removes the extra "Mr.X" statement because its tokens are redundant.
+	 * 
+	 * @param statements a list of statements that should be filtered away from redundant statements.
+	 */
+	public static void removeInnerStatements( List<SidebarStatement> statements ) {
+
+		List<Integer> toBeRemoved = new ArrayList<Integer>();
+		
+		for ( int i = 0; i < statements.size(); i++ ) {
+			SidebarStatement s1 = statements.get(i);
+			
+			for ( int j = 0; j < statements.size(); j++ ) {
+				SidebarStatement s2 = statements.get(j);
+				
+				if ( ( s1.getStart() >= s2.getStart() && s1.getStop() <= s2.getStop() )
+						&& ( s1.getStart() != s2.getStart() || s1.getStop() != s2.getStop() ) ) {
+					toBeRemoved.add( i );
+				}
+				
+			}
+		}
+
+		for ( int index : toBeRemoved ) {
+			statements.remove(index);
 		}
 		
 	}
