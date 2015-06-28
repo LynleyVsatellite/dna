@@ -64,9 +64,9 @@ public class PreprocessingFourthTask {
 				//or Normal. Of course, only do that to an ApprovedStatement that has at least one actor
 				//and one concept
 				if ( approvedStatementActors.size() > 0 && approvedStatementConcepts.size() > 0 ) {
-					StringBuffer buffer = new StringBuffer();
 					Map<Integer, Integer> actorsPositions = new HashMap<Integer, Integer>();
 					Map<Integer, Integer> conceptsPositions = new HashMap<Integer, Integer>();
+					Map<Integer, Integer> nonHighlightedTextPositions = new HashMap<Integer, Integer>();
 					
 					//Put the positions of the actors in a hashtable to be able to find their tokens
 					for ( SidebarStatement statement : approvedStatementActors ) {
@@ -83,7 +83,6 @@ public class PreprocessingFourthTask {
 					highlightedTextStartPositions.addAll( actorsPositions.keySet() );
 					highlightedTextStartPositions.addAll( conceptsPositions.keySet() );
 					Collections.sort( highlightedTextStartPositions );
-					Map<Integer, Integer> nonHighlightedTextPositions = new HashMap<Integer, Integer>();
 					
 					for ( int i = 0; i < highlightedTextStartPositions.size() - 1; i++ ) {
 						int startPosition = highlightedTextStartPositions.get(i);
@@ -122,6 +121,22 @@ public class PreprocessingFourthTask {
 						int lastNonHighlightedTextEndPosition = approvedStatement.getStop();
 						nonHighlightedTextPositions.put(lastNonHighlightedTextStartPosition,
 								lastNonHighlightedTextEndPosition);
+					}
+					
+					//Testing things out
+					for ( Integer start : actorsPositions.keySet() ) {
+						int end = actorsPositions.get(start);
+						System.out.printf( "A: %s\n", docString.subSequence(start, end) );
+					}
+					
+					for ( Integer start : conceptsPositions.keySet() ) {
+						int end = conceptsPositions.get(start);
+						System.out.printf( "C: %s\n",docString.subSequence(start, end) );
+					}
+					
+					for ( Integer start : nonHighlightedTextPositions.keySet() ) {
+						int end = nonHighlightedTextPositions.get(start);
+						System.out.printf( "N: %s\n", docString.subSequence(start, end) );
 					}
 					
 				}
