@@ -80,6 +80,11 @@ public class ActorConceptDataPreprocessor {
 				Document document = documentsList.get(c);
 				String docString = document.getText();
 				List<DNAToken> docTokens = tokenzier.tokenize(0, docString);
+				
+				for (DNAToken docToken : docTokens) {
+					docToken.setInternalDocId(c);
+				}
+				
 				DNATextMiner.giveLabels(docTokens, "Normal");
 				fromDocIdToDocTokens.put( c, docTokens );
 				//The purpose of the next hash table is to map from a token's start position
