@@ -2,6 +2,7 @@ package dna.textmining;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,15 +130,61 @@ public class ActorConceptLinker {
 	 */
 	private SimpleDataset getSamples( Set<Integer> docsIds ) {
 
+		List<SparseVector> positiveSamples = new ArrayList<SparseVector>();
+		List<SparseVector> negativeSamples = new ArrayList<SparseVector>();
+		
 		for ( int docID : docsIds ) {
 			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docID);
-			Map<Integer, List<Integer>> acLinks = acMapper.getFromDocIdToActorsConceptsLinks().get(docID);
+			Map<Integer, Set<Integer>> acLinks = acMapper.getFromDocIdToActorsConceptsLinks().get(docID);
 			List<SparseVector> windowVectors = getWindowVectors(docTokens);
+			Set<Integer> allConceptTokensIndicesInTheDoc = 
+					new HashSet<Integer>();
 			
-			//Now generate the samples! i.e which one is positive and which one is negative!
+
+			//Generating the positive samples
+			for ( int actorTokenIndex : acLinks.keySet() ) {
+				SparseVector actorTokenWindowVector = windowVectors.get(actorTokenIndex);
+				Set<Integer> conceptTokensIndices = acLinks.get(actorTokenIndex);
+				allConceptTokensIndicesInTheDoc.addAll(conceptTokensIndices);
+				
+				for ( int conceptTokenIndex : conceptTokensIndices ) {
+					SparseVector conceptTokenWindowVector = windowVectors.get(conceptTokenIndex);
+					SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
+					concatinatedVector.addAll(conceptTokenWindowVector);
+					positiveSamples.add(concatinatedVector);
+				}
+			}
+			
+			//Generating the negative samples
+			for ( int actorTokenIndex : acLinks.keySet() ) {
+				SparseVector actorTokenWindowVector = windowVectors.get(actorTokenIndex);
+				Set<Integer> actorConceptTokensIndices = acLinks.get(actorTokenIndex);
+				
+				for ( int candidateConceptTokenIndex : allConceptTokensIndicesInTheDoc ) {
+					
+					if ( !actorConceptTokensIndices.contains( candidateConceptTokenIndex ) ) {
+						SparseVector candidateConceptTokenWindowVector = 
+								windowVectors.get(candidateConceptTokenIndex);
+						SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
+						concatinatedVector.addAll(candidateConceptTokenWindowVector);
+						negativeSamples.add(concatinatedVector);
+					}
+					
+				}
+			}
+			
 		}
 		
-		return null;
+		double[] y = new double[ positiveSamples.size() + negativeSamples.size() ];
+		
+		for ( int i = 0; i < positiveSamples.size(); i++ ) {
+			y[i] = 1;
+		}
+		
+		positiveSamples.addAll(negativeSamples);
+		SimpleDataset dataset = new SimpleDataset(positiveSamples, y);
+		
+		return dataset;
 	}
 	
 	/**

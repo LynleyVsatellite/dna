@@ -3,6 +3,7 @@ package dna.textmining;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dna.DNAToken;
 
@@ -20,11 +21,11 @@ public class ActorConceptMapper {
 	/**
 	 * Maps from document's ID to document's actorsToConcepts links
 	 */
-	private Map<Integer, Map<Integer, List<Integer>>> fromDocIdToActorsConceptsLinks;
+	private Map<Integer, Map<Integer, Set<Integer>>> fromDocIdToActorsConceptsLinks;
 	
 	public ActorConceptMapper() {
 		fromDocIdToDocTokens = new HashMap<Integer, List<DNAToken>>();
-		fromDocIdToActorsConceptsLinks = new HashMap<Integer, Map<Integer, List<Integer>>>();
+		fromDocIdToActorsConceptsLinks = new HashMap<Integer, Map<Integer, Set<Integer>>>();
 	}
 
 	public Map<Integer, List<DNAToken>> getFromDocIdToDocTokens() {
@@ -36,12 +37,12 @@ public class ActorConceptMapper {
 		this.fromDocIdToDocTokens = fromDocIdToDocTokens;
 	}
 
-	public Map<Integer, Map<Integer, List<Integer>>> getFromDocIdToActorsConceptsLinks() {
+	public Map<Integer, Map<Integer, Set<Integer>>> getFromDocIdToActorsConceptsLinks() {
 		return fromDocIdToActorsConceptsLinks;
 	}
 
 	public void setFromDocIdToActorsConceptsLinks(
-			Map<Integer, Map<Integer, List<Integer>>> fromDocIdToActorsConceptsLinks) {
+			Map<Integer, Map<Integer, Set<Integer>>> fromDocIdToActorsConceptsLinks) {
 		this.fromDocIdToActorsConceptsLinks = fromDocIdToActorsConceptsLinks;
 	}
 	

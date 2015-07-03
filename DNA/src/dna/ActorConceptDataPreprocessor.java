@@ -4,8 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dna.textmining.ActorConceptMapper;
 
@@ -28,7 +30,7 @@ public class ActorConceptDataPreprocessor {
 		
 		for ( Integer docId : mapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
 			List<DNAToken> docTokens = mapper.getFromDocIdToDocTokens().get(docId);
-			Map<Integer, List<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
+			Map<Integer, Set<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
 			for ( int actorTokenIndex : acLinks.keySet() ) {
 				System.out.println( "Actor: " + docTokens.get(actorTokenIndex) );
 				System.out.println( "Linked to the following concept tokens:" );
@@ -74,8 +76,8 @@ public class ActorConceptDataPreprocessor {
 			List<Document> documentsList = dataAccess.getDocuments();
 			
 			for ( int c = 0; c < documentsList.size(); c++ ) {
-				Map<Integer, List<Integer>> actorConceptLinks = new
-						HashMap<Integer, List<Integer>>();
+				Map<Integer, Set<Integer>> actorConceptLinks = new
+						HashMap<Integer, Set<Integer>>();
 				acMapper.getFromDocIdToActorsConceptsLinks().put(c, actorConceptLinks);
 				Document document = documentsList.get(c);
 				String docString = document.getText();
@@ -218,7 +220,7 @@ public class ActorConceptDataPreprocessor {
 							for ( DNAToken actorToken : temp_tokens ) {
 								int tokenIndex = fromTokenStartPostitionToTokenIndex.get( 
 													actorToken.getStart_position() );
-								actorConceptLinks.put( tokenIndex, new ArrayList<Integer>() );
+								actorConceptLinks.put( tokenIndex, new HashSet<Integer>() );
 							}
 							statementTokens.addAll(temp_tokens);
 						}
@@ -236,7 +238,7 @@ public class ActorConceptDataPreprocessor {
 								int conceptTokenIndex = fromTokenStartPostitionToTokenIndex.get( 
 										conceptToken.getStart_position() );
 								for ( Integer actorTokenIndex : actorConceptLinks.keySet() ) {
-									List<Integer> conceptTokensIndices = actorConceptLinks.get(actorTokenIndex);
+									Set<Integer> conceptTokensIndices = actorConceptLinks.get(actorTokenIndex);
 									conceptTokensIndices.add(conceptTokenIndex);
 								}
 							}

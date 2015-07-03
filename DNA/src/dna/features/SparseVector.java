@@ -55,6 +55,12 @@ public class SparseVector implements Iterable<Double> {
 		currentIndex++;
 	}
 	
+	public void addAll(SparseVector vector) {
+		for ( double value : vector ) {
+			add(value);
+		}
+	}
+	
 	public void addAll(double[] list) {
 		for ( double value : list ) {
 			add(value);
@@ -171,6 +177,25 @@ public class SparseVector implements Iterable<Double> {
 		}
 		
 		return v;
+	}
+
+	public Map<Integer, Double> getHoldingHashTable() {
+		return ST;
+	}
+
+	public void setHoldingHashTable(Map<Integer, Double> hashTable) {
+		ST = hashTable;
+	}
+	
+	public void setCurrentIndex( int currentIndex ) {
+		this.currentIndex = currentIndex;
+	}
+	
+	public SparseVector getACopy() {
+		SparseVector copy = new SparseVector();
+		copy.setHoldingHashTable(ST);
+		copy.setCurrentIndex(currentIndex);
+		return copy;
 	}
 
 }
