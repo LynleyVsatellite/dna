@@ -57,14 +57,12 @@ public class DNATextMiner {
 	}
 	
 	private DNATokenizer tokenzier;
-	private Map<Integer, String> docsContents;
 	
 	/**
 	 * @param tokenzier the tokenizer that shall be used to tokenize the text.
 	 */
 	public DNATextMiner(DNATokenizer tokenzier) {
 		this.tokenzier = tokenzier;
-		this.docsContents = new HashMap<Integer, String>();
 	}
 	
 	/**
@@ -83,12 +81,15 @@ public class DNATextMiner {
 	 * @return
 	 */
 	public Dataset makeDataset(List<String> files, String classLabel, List<DNAFeature> features,
-			double trainSetSize, double testSetSize, double validationSetSize, int seed) {
+			double trainSetSize, double testSetSize, double validationSetSize, int seed, boolean undersample) {
 		
 		Map<String, Set<Integer>> trainTestValDocsIds  = 
 				getTrainTestValidateSplit(files, trainSetSize, testSetSize, validationSetSize, seed);
 		
 		List<DNAToken> tokens = getTokens(files, classLabel);
+
+		if (undersample)
+			tokens = undersample(tokens, 1);
 		
 		Dataset dataset = new Dataset(tokens, features, trainTestValDocsIds);
 		
@@ -136,7 +137,7 @@ public class DNATextMiner {
 	 * that are used for training are mapped to the key 'train', those for testing mapped to the key 'test' and those for validation
 	 * are mapped to the key 'validate'.
 	 */
-	public Map<String, Set<Integer>> getTrainTestValidateSplit( List<String> files,
+	public static Map<String, Set<Integer>> getTrainTestValidateSplit( List<String> files,
 			double trainSetSize, double testSetSize, double validationSetSize, int seed ) {
 		Map<String, Set<Integer>> trainTestValDocsIds = new HashMap<String, Set<Integer>>();
 		
@@ -370,13 +371,14 @@ public class DNATextMiner {
 	 * then only the wider statement is used. For example, the statement "Mr.X" can be highlighted 
 	 * as a Person and the statement "The minister of defense Mr.X" is also highlighted as a statement.
 	 * This methods removes the extra "Mr.X" statement because its tokens are redundant.
+	 * 
 	 * @param statements_positions the keys of this hash table are the start caret positions
 	 * of the statements in the document text, while the values are the end positions.
 	 * @return the statement positions with the redundant statements removed.
 	 */
 	private static HashMap<Integer, Integer> removeInnerStatements( HashMap<Integer, Integer> 
 		statements_positions ) {
-		ArrayList<Integer> tobe_removed = new ArrayList<Integer>();
+		ArrayList<Integer> toBeRemoved = new ArrayList<Integer>();
 		
 		for (Integer start : statements_positions.keySet()) {
 			int end = statements_positions.get(start);
@@ -385,14 +387,14 @@ public class DNATextMiner {
 				int temp_end = statements_positions.get(temp_start);
 				
 				if ( ( start >= temp_start && end <= temp_end) && ( start != temp_start || end !=temp_end ) ) {
-					tobe_removed.add(start);
+					toBeRemoved.add(start);
 				}
 				
 			}
 			
 		}
 		
-		for (int key : tobe_removed) {
+		for (int key : toBeRemoved) {
 			statements_positions.remove(key);
 		}
 		
@@ -409,7 +411,7 @@ public class DNATextMiner {
 		this.tokenzier = tokenzier;
 	}
 	
-	private static List<DNAToken> giveLabels( List<DNAToken> tokens, String label ) {
+	public static List<DNAToken> giveLabels( List<DNAToken> tokens, String label ) {
 		
 		for (DNAToken token : tokens) {
 			token.setLabel(label);
@@ -578,6 +580,12 @@ public class DNATextMiner {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		return tokens;
+	}
+	
+	public static List<DNAToken> undersample(List<DNAToken> tokens, int undersamplingFactor) {
+		//TODO implement undersampling
 		
 		return tokens;
 	}

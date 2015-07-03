@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import ml.classification.LinearBinarySVM;
+import ml.classification.LogisticRegression;
 import dna.DNAFeature;
 import dna.DNATextMiner;
 import dna.StanfordDNATokenizer;
 import dna.features.AllCapitalizedDNAFeature;
+import dna.features.CoreNLPDNAFeature;
 import dna.features.HasCapitalLetterDNAFeature;
 import dna.features.HasWeirdCharDNAFeature;
 import dna.features.IsANumberDNAFeature;
@@ -30,7 +31,7 @@ public class Experiements {
 				exp1( "Organization", i );
 		}
 		else if ( option == 3 ) { //Concept
-			for ( int i = 0; i < 3; i++ )
+			for ( int i = 6; i < 11; i++ )
 				exp1( "Concept", i );
 		}
 		else {
@@ -54,7 +55,7 @@ public class Experiements {
 		
 		List<DNAFeature> features = new ArrayList<DNAFeature>();
 		features.add( new HasCapitalLetterDNAFeature() );
-//		features.add( new CoreNLPDNAFeature(true, true) );
+		features.add( new CoreNLPDNAFeature(true, true) );
 		features.add( new HasWeirdCharDNAFeature() );
 		features.add( new AllCapitalizedDNAFeature() );
 		features.add( new IsANumberDNAFeature() );
@@ -66,38 +67,57 @@ public class Experiements {
 				"AllCapitalizedDNAFeature", "IsANumberDNAFeature", "NumberOfCharsDNAFeature", "WordDNAFeature", 
 				"NGramDNAFeature"};
 		
-		for ( int i = -1; i < features.size(); i++ ) {
-			if ( i == -1 )
-				System.out.println( "Running a new test with all features" );
-			else
-				System.out.println( "Running a new test with out feature: " + featuresNames[i] );
-			List<DNAFeature> tempFeatures = new ArrayList<DNAFeature>();
-			for ( int j = 0; j < features.size(); j++ ) {
-				if ( j != i ) {
-					tempFeatures.add( features.get(j) );
-				}
-			}
-			
-			Dataset dataset = 
-					textMiner.makeDataset(files, classLabel, tempFeatures, 
-							0.6, 0.2, 0.2, 1, false);
-			
-			int regularizationType = 0;
-			double lambda = 0;
-			
-//			ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
-			
-			double C = 1.0;
-			double eps = 1e-4;
-			ml.classification.Classifier lamlOrigClf = new LinearBinarySVM(C, eps);
-			
-			LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
-			TokenClassifier clf = new TokenClassifier(dataset, lamlClf, windowSize);
-			
-			clf.train();
-			clf.validate();
-			System.out.println( new Date() );
-		}
+		Dataset dataset = 
+				textMiner.makeDataset(files, classLabel, features, 
+						0.6, 0.2, 0.2, 1, false);
+		
+		int regularizationType = 0;
+		double lambda = 0;
+		ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+		
+//		double C = 1.0;
+//		double eps = 1e-4;
+//		ml.classification.Classifier lamlOrigClf = new LinearBinarySVM(C, eps);
+		
+		LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
+		TokenClassifier clf = new TokenClassifier(dataset, lamlClf, windowSize);
+		
+		clf.train();
+		clf.validate();
+		System.out.println( new Date() );
+		
+//		for ( int i = -1; i < features.size(); i++ ) {
+//			if ( i == -1 )
+//				System.out.println( "Running a new test with all features" );
+//			else
+//				System.out.println( "Running a new test with out feature: " + featuresNames[i] );
+//			List<DNAFeature> tempFeatures = new ArrayList<DNAFeature>();
+//			for ( int j = 0; j < features.size(); j++ ) {
+//				if ( j != i ) {
+//					tempFeatures.add( features.get(j) );
+//				}
+//			}
+//			
+//			Dataset dataset = 
+//					textMiner.makeDataset(files, classLabel, tempFeatures, 
+//							0.6, 0.2, 0.2, 1, false);
+//			
+//			int regularizationType = 0;
+//			double lambda = 0;
+//			
+////			ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+//			
+//			double C = 1.0;
+//			double eps = 1e-4;
+//			ml.classification.Classifier lamlOrigClf = new LinearBinarySVM(C, eps);
+//			
+//			LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
+//			TokenClassifier clf = new TokenClassifier(dataset, lamlClf, windowSize);
+//			
+//			clf.train();
+//			clf.validate();
+//			System.out.println( new Date() );
+//		}
 		
 		
 	}

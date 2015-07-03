@@ -20,7 +20,7 @@ public class FeatureFactory {
 	
 	/**
 	 * 
-	 * @param tokens the tokens of the documents collection
+	 * @param tokens all the tokens in the documents collection
 	 * @param features the features to be used for the tokens
 	 * @param trainTestValDocsIds holds the internalDocId/s of the documents that are used for training, testing, and validation.
 	 */

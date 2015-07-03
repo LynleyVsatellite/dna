@@ -48,7 +48,7 @@ public class TextMiningApp {
 		
 		Dataset dataset = 
 				textMiner.makeDataset(files, classLabel, features, 
-						0.6, 0.2, 0.2, 1);
+						0.6, 0.2, 0.2, 1, false);
 		
 		
 //		LinearL1SCD( 10000, 1e-14, Loss.SQUARED )
