@@ -193,9 +193,23 @@ public class SparseVector implements Iterable<Double> {
 	
 	public SparseVector getACopy() {
 		SparseVector copy = new SparseVector();
-		copy.setHoldingHashTable(ST);
-		copy.setCurrentIndex(currentIndex);
+		for ( double value : this ) {
+			copy.add(value);
+		}
 		return copy;
+	}
+	
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("[ ");
+		for ( int i = 0; i < size(); i++ ) {
+			if ( i == size() - 1 ) 
+				buffer.append( get(i) + " " );
+			else
+				buffer.append( get(i) + ", " );
+		}
+		buffer.append("]");
+		return buffer.toString();
 	}
 
 }
