@@ -13,12 +13,29 @@ import dna.DNATextMiner;
 import dna.DNAToken;
 import dna.StanfordDNATokenizer;
 import dna.features.FeatureFactory;
+import dna.features.HasCapitalLetterDNAFeature;
 import dna.features.SparseVector;
 
 /**
  * This class links Actors to Concepts. In other words, it gives the concept/s that each actor is talking about.
  */
 public class ActorConceptLinker {
+	
+	public static void main(String[] args) {
+		System.out.println( "+++ Started +++" );
+		String file1 = "/Users/rockyrock/Desktop/Desktop/s0-x3.dna";
+		List<String> files = new ArrayList<String>();
+		files.add(file1);
+		
+		List<DNAFeature> features = new ArrayList<DNAFeature>();
+		features.add( new HasCapitalLetterDNAFeature() );
+		
+		ActorConceptLinker acLinker = new ActorConceptLinker(files, features, 0, 
+				1.0, 0.0, 0.0, 0);
+		acLinker.train();
+		System.out.println( "+++ Done +++" );
+		
+	}
 
 	private List<String> dnaFiles;
 	private List<DNAFeature> features;
@@ -42,11 +59,6 @@ public class ActorConceptLinker {
 	public ActorConceptLinker(List<String> dnaFiles, List<DNAFeature> features, 
 			int windowSize, double trainSetSize, double testSetSize, 
 			double validationSetSize, int seed) {
-		//Sample the documents from DNATextMiner.getSplit
-		//Build the feature vectors for the tokens
-		//Build the window features for the tokens
-		//Build the X,y dataset format
-		//Build train, test, validate methods to train a DNAClassifier
 
 		this.dnaFiles = dnaFiles;
 		this.features = features;
@@ -75,11 +87,14 @@ public class ActorConceptLinker {
 		featureFactory = new FeatureFactory(allTokens, features, trainTestValDocsIds);
 
 		//Building the feature vectors for the tokens.
-		for ( Integer docId : acMapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
-			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docId);
-			featureFactory.generateFeatures(docTokens);
-
-		}//Is it generating the features for all the samples? i.e. train/validate/test?!
+		featureFactory.generateFeatures(allTokens);//The commented code does the same task
+		//but I didn't remove it because I'm not yet sure why I did it that way.
+		//TODO Maybe generateFeatures() should be called at a doc level or so. To be checked later.
+//		for ( Integer docId : acMapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
+//			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docId);
+//			featureFactory.generateFeatures(docTokens);
+//
+//		}
 
 	}
 
@@ -99,10 +114,12 @@ public class ActorConceptLinker {
 	 * Trains the classifier using the generated training dataset.
 	 */
 	public void train() {
-		//build the window feature vectors
-		//train
 		
-		//Genereate the window feature vectors only for the training samples!
+		SimpleDataset trainDataset = getSamples(trainTestValDocsIds.get("train"));
+		
+		System.out.println( "Done training" );
+		
+		//Generate the window feature vectors only for the training samples!
 
 	}
 
@@ -167,6 +184,8 @@ public class ActorConceptLinker {
 								windowVectors.get(candidateConceptTokenIndex);
 						SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
 						concatinatedVector.addAll(candidateConceptTokenWindowVector);
+						System.err.printf( "- Actor: %s, Concept: %s\n", docTokens.get(actorTokenIndex).getText(),
+								docTokens.get(candidateConceptTokenIndex).getText());
 						negativeSamples.add(concatinatedVector);
 					}
 					
