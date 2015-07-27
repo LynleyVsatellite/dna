@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ml.classification.LogisticRegression;
 import dna.ActorConceptDataPreprocessor;
 import dna.DNAFeature;
 import dna.DNATextMiner;
@@ -23,16 +24,23 @@ public class ActorConceptLinker {
 	
 	public static void main(String[] args) {
 		System.out.println( "+++ Started +++" );
-		String file1 = "/Users/rockyrock/Desktop/Desktop/s0-x3.dna";
+		String file1 = "/Users/rockyrock/Desktop/Desktop/s0.dna";
 		List<String> files = new ArrayList<String>();
 		files.add(file1);
 		
 		List<DNAFeature> features = new ArrayList<DNAFeature>();
 		features.add( new HasCapitalLetterDNAFeature() );
 		
-		ActorConceptLinker acLinker = new ActorConceptLinker(files, features, 0, 
-				1.0, 0.0, 0.0, 0);
+		int regularizationType = 0;
+		double lambda = 0;
+		ml.classification.Classifier lamlOrigClf = new LogisticRegression(regularizationType, lambda);
+		
+		LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
+		
+		ActorConceptLinker acLinker = new ActorConceptLinker(files, features, lamlClf, 0, 
+				0.6, 0.2, 0.2, 0);
 		acLinker.train();
+		acLinker.test();
 		System.out.println( "+++ Done +++" );
 		
 	}
@@ -44,11 +52,13 @@ public class ActorConceptLinker {
 	private ActorConceptDataPreprocessor acDataProcessor;
 	private ActorConceptMapper acMapper;
 	private FeatureFactory featureFactory;
+	private DNAClassifier clf;
 
 	/**
 	 * 
 	 * @param dnaFiles the files to use to create a training/testing/validation datasets.
 	 * @param features the features to be used for the classifier.
+	 * @param classifier the classifier to be used.
 	 * @param windowSize the number of tokens before and after the current tokens to be used when 
 	 * constructing the feature vector for the current token.
 	 * @param trainSetSize the size of the training dataset.
@@ -56,13 +66,14 @@ public class ActorConceptLinker {
 	 * @param validationSetSize the size of the validation dataset.
 	 * @param seed the seed to be used when sampling the dna files while creating the datasets.
 	 */
-	public ActorConceptLinker(List<String> dnaFiles, List<DNAFeature> features, 
+	public ActorConceptLinker(List<String> dnaFiles, List<DNAFeature> features, DNAClassifier classifier,
 			int windowSize, double trainSetSize, double testSetSize, 
 			double validationSetSize, int seed) {
 
 		this.dnaFiles = dnaFiles;
 		this.features = features;
 		this.windowSize = windowSize;
+		this.clf = classifier;
 		trainTestValDocsIds  = 
 				DNATextMiner.getTrainTestValidateSplit(dnaFiles, trainSetSize, 
 						testSetSize, validationSetSize, seed);
@@ -116,7 +127,20 @@ public class ActorConceptLinker {
 	public void train() {
 		
 		SimpleDataset trainDataset = getSamples(trainTestValDocsIds.get("train"));
+		List<SparseVector> X = trainDataset.getX();
+		double[] y = trainDataset.getY();
 		
+		for ( int i = 0; i < X.size(); i++ ) {
+			String classValue = "";
+			if ( y[i] == 0 ) {
+				classValue = clf.NEGATIVE_CLASS;
+			}
+			else {
+				classValue = clf.POSITIVE_CLASS;
+			}
+			clf.updateData(X.get(i), classValue);
+		}
+		clf.updateClassifier();
 		System.out.println( "Done training" );
 		
 		//Generate the window feature vectors only for the training samples!
@@ -127,16 +151,49 @@ public class ActorConceptLinker {
 	 * Tests the classifier using the test dataset.
 	 */
 	public void test() {
-		//build the window feature vectors
-		//test
+		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("test"));
+		List<SparseVector> X = simpleDataset.getX();
+		double[] y_test = simpleDataset.getY();
+		double[] preds = new double[ y_test.length ];
+
+		for ( int i = 0; i < X.size(); i++ ) {
+			SparseVector vector = X.get(i);
+			String classValue = clf.classifyInstance(vector);
+			
+			if ( classValue.equals(clf.NEGATIVE_CLASS) ) {
+				preds[i] = 0;
+			}
+			else {
+				preds[i] = 1;
+			}
+		}
+		
+		StatsUtils.printStats(y_test, preds);
+		
 	}
 
 	/**
 	 * Validates the classifier using the validation dataset.
 	 */
 	public void validate() {
-		//build the window feature vectors
-		//validate
+		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("validate"));
+		List<SparseVector> X = simpleDataset.getX();
+		double[] y_test = simpleDataset.getY();
+		double[] preds = new double[ y_test.length ];
+
+		for ( int i = 0; i < X.size(); i++ ) {
+			SparseVector vector = X.get(i);
+			String classValue = clf.classifyInstance(vector);
+			
+			if ( classValue.equals(clf.NEGATIVE_CLASS) ) {
+				preds[i] = 0;
+			}
+			else {
+				preds[i] = 1;
+			}
+		}
+		
+		StatsUtils.printStats(y_test, preds);
 	}
 	
 	/**
