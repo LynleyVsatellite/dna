@@ -121,7 +121,6 @@ public class ActorConceptDataPreprocessor {
 				removeInnerStatements(actorStatements);
 				removeInnerStatements(conceptStatements);
 				
-				//TODO ignore approved statements if there are no actor or concepts in them at all!
 				//Find the actors and concepts within each ApprovedStatement
 				for ( SidebarStatement approvedStatement : approvedStatements ) {
 					List<SidebarStatement> approvedStatementActors = new ArrayList<SidebarStatement>();
@@ -298,6 +297,8 @@ public class ActorConceptDataPreprocessor {
 			}
 		}
 
+		Collections.sort(toBeRemoved, Collections.reverseOrder());
+		
 		for ( int index : toBeRemoved ) {
 			statements.remove(index);
 		}
