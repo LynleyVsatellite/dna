@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import ml.classification.LogisticRegression;
 import dna.ActorConceptDataPreprocessor;
 import dna.DNAFeature;
 import dna.DNATextMiner;
@@ -16,6 +15,7 @@ import dna.StanfordDNATokenizer;
 import dna.features.FeatureFactory;
 import dna.features.HasCapitalLetterDNAFeature;
 import dna.features.SparseVector;
+import ml.classification.LogisticRegression;
 
 /**
  * This class links Actors to Concepts. In other words, it gives the concept/s that each actor is talking about.
@@ -24,7 +24,8 @@ public class ActorConceptLinker {
 	
 	public static void main(String[] args) {
 		System.out.println( "+++ Started +++" );
-		String file1 = "/Users/rockyrock/Desktop/Desktop/s0.dna";
+		String file1 = "/Users/rakandirbas/Desktop/dna_files/s0.dna";
+//		String file1 = "/Users/rakandirbas/Desktop/dna_files/s0-mini.dna";
 		List<String> files = new ArrayList<String>();
 		files.add(file1);
 		

@@ -32,7 +32,7 @@ public class HasCapitalLetterDNAFeature extends DNAFeature {
 		tok5.setText("wri$ting");
 		
 		DNAToken tok6 = new DNAToken();
-		tok6.setText("texiti");
+		tok6.setText("der");
 		
 		tokens.add( tok1 );
 		tokens.add( tok2 );
@@ -52,6 +52,7 @@ public class HasCapitalLetterDNAFeature extends DNAFeature {
 	public void buildFeature(List<DNAToken> tokens) {
 		for ( DNAToken tok : tokens ) {
 			String txt = tok.getText();
+			
 			boolean hasCapitalLetter = !txt.equals( txt.toLowerCase() );
 			
 			if ( hasCapitalLetter ) {

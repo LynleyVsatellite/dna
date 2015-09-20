@@ -19,28 +19,29 @@ import dna.textmining.ActorConceptMapper;
 public class ActorConceptDataPreprocessor {
 	
 	public static void main(String[] args) {
-		System.out.println("Started");
+		System.out.println("Started Preprocessor");
 		
-		String file1 = "/Users/rockyrock/Desktop/s0_copy.dna";
+		String file1 = "/Users/rakandirbas/Desktop/dna_files/s0.dna";
 		List<File> files = new ArrayList<File>();
 		files.add(new File(file1));
 		
 		ActorConceptDataPreprocessor acDataProcessor = new ActorConceptDataPreprocessor(new StanfordDNATokenizer());
 		ActorConceptMapper mapper = acDataProcessor.generalizeData(files);
 		
-		for ( Integer docId : mapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
-			List<DNAToken> docTokens = mapper.getFromDocIdToDocTokens().get(docId);
-			Map<Integer, Set<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
-			for ( int actorTokenIndex : acLinks.keySet() ) {
-				System.out.println( "Actor: " + docTokens.get(actorTokenIndex) );
-				System.out.println( "Linked to the following concept tokens:" );
-				for( int conceptTokenIndex : acLinks.get(actorTokenIndex) ) {
-					System.out.print("[" + docTokens.get(conceptTokenIndex) + "]");
-				}
-				System.out.println("\n");
-			}
-			
-		}
+		System.out.println("END");
+//		for ( Integer docId : mapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
+//			List<DNAToken> docTokens = mapper.getFromDocIdToDocTokens().get(docId);
+//			Map<Integer, Set<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
+//			for ( int actorTokenIndex : acLinks.keySet() ) {
+//				System.out.println( "Actor: " + docTokens.get(actorTokenIndex) );
+//				System.out.println( "Linked to the following concept tokens:" );
+//				for( int conceptTokenIndex : acLinks.get(actorTokenIndex) ) {
+//					System.out.print("[" + docTokens.get(conceptTokenIndex) + "]");
+//				}
+//				System.out.println("\n");
+//			}
+//			
+//		}
 		
 	}
 	
@@ -168,7 +169,7 @@ public class ActorConceptDataPreprocessor {
 						highlightedTextStartPositions.addAll( conceptsPositions.keySet() );
 						Collections.sort( highlightedTextStartPositions );
 						
-						for ( int i = 0; i < highlightedTextStartPositions.size() - 1; i++ ) {
+						for ( int i = 0; i < highlightedTextStartPositions.size(); i++ ) {
 							int startPosition = highlightedTextStartPositions.get(i);
 							int endPosition;
 							if ( actorsPositions.containsKey(startPosition) ) {
@@ -178,8 +179,21 @@ public class ActorConceptDataPreprocessor {
 								endPosition = conceptsPositions.get(startPosition);
 							}
 							
-							int subsequentStartPosition = highlightedTextStartPositions.get(i+1);
-							nonHighlightedTextPositions.put(endPosition, subsequentStartPosition);
+							int subsequentStartPosition = 0;
+							//Check for the last non-highlighted part in the statement.
+							if ( i == highlightedTextStartPositions.size() - 1 ) {
+								subsequentStartPosition = approvedStatement.getStop();
+							} 
+							else {
+								subsequentStartPosition	= highlightedTextStartPositions.get(i+1);
+							}
+							
+							//Avoids overlapped actors statements from different types
+							//E.g. Org inside Person. 
+							if ( subsequentStartPosition > endPosition  ) {
+								nonHighlightedTextPositions.put(endPosition, subsequentStartPosition);
+							}
+							
 						}
 						
 						//Check for the part before the first highlighted text segment
@@ -189,27 +203,8 @@ public class ActorConceptDataPreprocessor {
 							nonHighlightedTextPositions.put(nonHighlightedTextStartPosition, nonHighlightedTextEndPosition);
 						}
 						
-						//Check for the part after the last highlighted text segment
-						int lastHighlightedTextStartPosition = highlightedTextStartPositions.get(
-																highlightedTextStartPositions.size()-1  );
-						int lastHighlightedTextEndPosition;
-						if ( actorsPositions.containsKey(lastHighlightedTextStartPosition) ) {
-							lastHighlightedTextEndPosition = actorsPositions.get(lastHighlightedTextStartPosition);
-						}
-						else {
-							lastHighlightedTextEndPosition = conceptsPositions.get(lastHighlightedTextStartPosition);
-						}
-						
-						if ( lastHighlightedTextEndPosition != approvedStatement.getStop() ) {
-							int lastNonHighlightedTextStartPosition = lastHighlightedTextEndPosition;
-							int lastNonHighlightedTextEndPosition = approvedStatement.getStop();
-							nonHighlightedTextPositions.put(lastNonHighlightedTextStartPosition,
-									lastNonHighlightedTextEndPosition);
-						}
-						
 						//Tokenization 
 						List<DNAToken> statementTokens = new ArrayList<DNAToken>();
-						
 						for ( Integer start : actorsPositions.keySet() ) {
 							int end = actorsPositions.get(start);
 							
@@ -222,7 +217,10 @@ public class ActorConceptDataPreprocessor {
 								actorConceptLinks.put( tokenIndex, new HashSet<Integer>() );
 							}
 							statementTokens.addAll(temp_tokens);
+							
 						}
+						
+						
 						
 						for ( Integer start : conceptsPositions.keySet() ) {
 							int end = conceptsPositions.get(start);
@@ -247,9 +245,9 @@ public class ActorConceptDataPreprocessor {
 						
 						for ( Integer start : nonHighlightedTextPositions.keySet() ) {
 							int end = nonHighlightedTextPositions.get(start);
-							
 							List<DNAToken> temp_tokens = tokenzier.tokenize(start,
 									docString.substring(start, end));
+							
 							DNATextMiner.giveLabels(temp_tokens, "Normal");
 							statementTokens.addAll(temp_tokens);
 						}
@@ -259,10 +257,9 @@ public class ActorConceptDataPreprocessor {
 							docTokens.get(tokenIndex).setLabel(token.getLabel());
 						}
 						
-						acMapper.getFromDocIdToActorsConceptsLinks().put(c, actorConceptLinks);
+//						acMapper.getFromDocIdToActorsConceptsLinks().put(c, actorConceptLinks);
 					}
 				}
-				
 			}
 		}
 		

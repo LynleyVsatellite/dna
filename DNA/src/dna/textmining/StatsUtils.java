@@ -4,10 +4,20 @@ import java.util.List;
 
 public class StatsUtils {
 	
+	/**
+	 * Prints classification statistics (Recal, Precision, F1-measure).
+	 * @param y_test the ground-truth.
+	 * @param preds the results from the classifier to be tested.
+	 */
 	public static void printStats(List<Double> y_test, List<Double> preds) {
 		printStats( ListUtils.asDoubleArray(y_test), ListUtils.asDoubleArray(preds) );
 	}
 	
+	/**
+	 * Prints classification statistics (Recal, Precision, F1-measure).
+	 * @param y_test the ground-truth.
+	 * @param preds the results from the classifier to be tested.
+	 */
 	public static void printStats(double[] y_test, double[] preds) {
 
 		if ( y_test.length != preds.length )
