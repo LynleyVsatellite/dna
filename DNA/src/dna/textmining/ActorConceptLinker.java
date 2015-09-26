@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import dna.ActorConceptDataPreprocessor;
@@ -39,7 +40,7 @@ public class ActorConceptLinker {
 		LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
 		
 		ActorConceptLinker acLinker = new ActorConceptLinker(files, features, lamlClf, 0, 
-				0.6, 0.2, 0.2, 0);
+				0.6, 0.2, 0.2, 0, true, true);
 		acLinker.train();
 		acLinker.test();
 		System.out.println( "+++ Done +++" );
@@ -54,6 +55,9 @@ public class ActorConceptLinker {
 	private ActorConceptMapper acMapper;
 	private FeatureFactory featureFactory;
 	private DNAClassifier clf;
+	private boolean addATNegatives;
+	private boolean addTTNegatives;
+	
 
 	/**
 	 * 
@@ -69,11 +73,13 @@ public class ActorConceptLinker {
 	 */
 	public ActorConceptLinker(List<String> dnaFiles, List<DNAFeature> features, DNAClassifier classifier,
 			int windowSize, double trainSetSize, double testSetSize, 
-			double validationSetSize, int seed) {
+			double validationSetSize, int seed, boolean addATNegatives, boolean addTTNegatives) {
 
 		this.dnaFiles = dnaFiles;
 		this.features = features;
 		this.windowSize = windowSize;
+		this.addATNegatives = addATNegatives;
+		this.addTTNegatives = addTTNegatives;
 		this.clf = classifier;
 		trainTestValDocsIds  = 
 				DNATextMiner.getTrainTestValidateSplit(dnaFiles, trainSetSize, 
@@ -127,7 +133,7 @@ public class ActorConceptLinker {
 	 */
 	public void train() {
 		
-		SimpleDataset trainDataset = getSamples(trainTestValDocsIds.get("train"));
+		SimpleDataset trainDataset = getSamples(trainTestValDocsIds.get("train"), addATNegatives, addTTNegatives);
 		List<SparseVector> X = trainDataset.getX();
 		double[] y = trainDataset.getY();
 		
@@ -152,7 +158,7 @@ public class ActorConceptLinker {
 	 * Tests the classifier using the test dataset.
 	 */
 	public void test() {
-		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("test"));
+		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("test"), addATNegatives, addTTNegatives);
 		List<SparseVector> X = simpleDataset.getX();
 		double[] y_test = simpleDataset.getY();
 		double[] preds = new double[ y_test.length ];
@@ -177,7 +183,7 @@ public class ActorConceptLinker {
 	 * Validates the classifier using the validation dataset.
 	 */
 	public void validate() {
-		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("validate"));
+		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("validate"), addATNegatives, addTTNegatives);
 		List<SparseVector> X = simpleDataset.getX();
 		double[] y_test = simpleDataset.getY();
 		double[] preds = new double[ y_test.length ];
@@ -201,9 +207,12 @@ public class ActorConceptLinker {
 	 * Generates a set of samples to be used as either training, testing or a validation set.
 	 * @param docsIds a set that contains the internal docIds of the documents from which the samples
 	 * 	will be generated.
+	 * @param addATNegatives should the Actor-Token negative samples be added as well?
+	 * @param addTTNegatives should the Token-Token negative samples be added as well?
 	 * @return
 	 */
-	private SimpleDataset getSamples( Set<Integer> docsIds ) {
+	private SimpleDataset getSamples( Set<Integer> docsIds, 
+			boolean addATNegatives, boolean addTTNegatives ) {
 
 		List<SparseVector> positiveSamples = new ArrayList<SparseVector>();
 		List<SparseVector> negativeSamples = new ArrayList<SparseVector>();
@@ -215,6 +224,7 @@ public class ActorConceptLinker {
 			Set<Integer> allConceptTokensIndicesInTheDoc = 
 					new HashSet<Integer>();
 			
+			int numDocPositiveSamples = 0;
 
 			//Generating the positive samples
 			for ( int actorTokenIndex : acLinks.keySet() ) {
@@ -226,11 +236,18 @@ public class ActorConceptLinker {
 					SparseVector conceptTokenWindowVector = windowVectors.get(conceptTokenIndex);
 					SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
 					concatinatedVector.addAll(conceptTokenWindowVector);
+					double distanceFeature = 
+							Math.abs( 
+									docTokens.get(actorTokenIndex).getStart_position() -
+									docTokens.get(conceptTokenIndex).getStart_position()
+							);
+					concatinatedVector.add(distanceFeature);
 					positiveSamples.add(concatinatedVector);
+					numDocPositiveSamples++;
 				}
 			}
 			
-			//Generating the negative samples
+			//Generating the Actor-Concept negative samples
 			for ( int actorTokenIndex : acLinks.keySet() ) {
 				SparseVector actorTokenWindowVector = windowVectors.get(actorTokenIndex);
 				Set<Integer> actorConceptTokensIndices = acLinks.get(actorTokenIndex);
@@ -242,11 +259,77 @@ public class ActorConceptLinker {
 								windowVectors.get(candidateConceptTokenIndex);
 						SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
 						concatinatedVector.addAll(candidateConceptTokenWindowVector);
-						System.err.printf( "- Actor: %s, Concept: %s\n", docTokens.get(actorTokenIndex).getText(),
-								docTokens.get(candidateConceptTokenIndex).getText());
+//						System.err.printf( "- Actor: %s, Concept: %s\n", docTokens.get(actorTokenIndex).getText(),
+//								docTokens.get(candidateConceptTokenIndex).getText());
+						
+						double distanceFeature = 
+								Math.abs( 
+										docTokens.get(actorTokenIndex).getStart_position() -
+										docTokens.get(candidateConceptTokenIndex).getStart_position()
+								);
+						concatinatedVector.add(distanceFeature);
 						negativeSamples.add(concatinatedVector);
 					}
 					
+				}
+			}
+			
+			List<Integer> actorsTokenIndicesSelectionList = new ArrayList<Integer>();
+			List<Integer> normalTokenIndicesSelectionList = new ArrayList<Integer>();
+			
+			for (int i = 0; i < docTokens.size(); i++) {
+				DNAToken token = docTokens.get(i);
+				if (token.getLabel().equals("Normal"))
+					normalTokenIndicesSelectionList.add(i);
+				else if(token.getLabel().equals("Actor"))
+					actorsTokenIndicesSelectionList.add(i);
+			}
+			
+			
+			if ( addATNegatives && 
+					normalTokenIndicesSelectionList.size() > 0 &&
+					actorsTokenIndicesSelectionList.size() > 0 ) {
+				Random actorsRandomGen = new Random(0);
+				Random normalTokensRandomGen = new Random(1);
+				for ( int j = 0; j < numDocPositiveSamples/2; j++ ) {
+					int actorTokenIndex = actorsRandomGen.nextInt(actorsTokenIndicesSelectionList.size());
+					int normalTokenIndex = 
+							normalTokensRandomGen.nextInt(normalTokenIndicesSelectionList.size());
+					
+					SparseVector actorTokenWindowVector = windowVectors.get(actorTokenIndex);
+					SparseVector normalTokenWindowVector = 
+							windowVectors.get(normalTokenIndex);
+					SparseVector concatinatedVector = actorTokenWindowVector.getACopy();
+					concatinatedVector.addAll(normalTokenWindowVector);
+					double distanceFeature = 
+							Math.abs( 
+									docTokens.get(actorTokenIndex).getStart_position() -
+									docTokens.get(normalTokenIndex).getStart_position()
+							);
+					concatinatedVector.add(distanceFeature);
+					negativeSamples.add(concatinatedVector);
+				}
+			}
+			
+			if ( addTTNegatives && normalTokenIndicesSelectionList.size() > 0 ) {
+				Random normalTokensRandomGen1 = new Random(0);
+				Random normalTokensRandomGen2 = new Random(1);
+				for ( int j = 0; j < numDocPositiveSamples/2; j++ ) {
+					int normalTokenIndex1 = normalTokensRandomGen1.nextInt(normalTokenIndicesSelectionList.size());
+					int normalTokenIndex2 = 
+							normalTokensRandomGen2.nextInt(normalTokenIndicesSelectionList.size());
+					
+					SparseVector normalTokenWindowVector1 = windowVectors.get(normalTokenIndex1);
+					SparseVector normalTokenWindowVector2 = windowVectors.get(normalTokenIndex2);
+					SparseVector concatinatedVector = normalTokenWindowVector1.getACopy();
+					concatinatedVector.addAll(normalTokenWindowVector2);
+					double distanceFeature = 
+							Math.abs( 
+									docTokens.get(normalTokenIndex1).getStart_position() -
+									docTokens.get(normalTokenIndex2).getStart_position()
+							);
+					concatinatedVector.add(distanceFeature);
+					negativeSamples.add(concatinatedVector);
 				}
 			}
 			
