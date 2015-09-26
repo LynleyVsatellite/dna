@@ -1,7 +1,9 @@
 package dna.textmining;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,7 @@ import ml.classification.LogisticRegression;
 /**
  * This class links Actors to Concepts. In other words, it gives the concept/s that each actor is talking about.
  */
-public class ActorConceptLinker {
+public class ActorConceptLinker implements Serializable {
 	
 	public static void main(String[] args) {
 		System.out.println( "+++ Started +++" );
@@ -47,6 +49,10 @@ public class ActorConceptLinker {
 		
 	}
 
+	/**
+	 * Serialization ID
+	 */
+	private static final long serialVersionUID = 3349572962894518609L;
 	private List<String> dnaFiles;
 	private List<DNAFeature> features;
 	private int windowSize;
@@ -58,9 +64,9 @@ public class ActorConceptLinker {
 	private boolean addATNegatives;
 	private boolean addTTNegatives;
 	private boolean createDataset;
-	private SimpleDataset trainDataset;
-	private SimpleDataset testDataset;
-	private SimpleDataset valiDataset;
+	private transient SimpleDataset trainDataset;
+	private transient SimpleDataset testDataset;
+	private transient SimpleDataset valiDataset;
 
 	/**
 	 * 
@@ -161,13 +167,60 @@ public class ActorConceptLinker {
 	/**
 	 * This method gives the concepts that each actor is talking about. It accepts a list 
 	 * of tokens of a document, where the actor tokens have the label 'Actor' and the concept tokens
-	 * have the label 'Concept'.
+	 * have the label 'Concept'. To tokenize a string, see {@link StanfordDNATokenizer}.
 	 * @param documentTokens The tokens of a document.
 	 * @return A map that has as keys the indices of the Actor tokens in the {@link documentTokens}, and as values
 	 * lists of the indices of the concept tokens that each Actor token is referring to in the text.
 	 */
-	public Map<Integer, List<Integer>> linkActorsToConcept(List<DNAToken> documentTokens) {
-		return null;
+	public Map<Integer, Set<Integer>> linkActorsToConcept(List<DNAToken> documentTokens) {
+		Map<Integer, Set<Integer>> acLinks = 
+				new HashMap<Integer, Set<Integer>>();
+		List<SparseVector> windowVectors = getWindowVectors(documentTokens);
+		
+		List<Integer> actorTokensIndices = new ArrayList<Integer>();
+		List<Integer> conceptTokensIndices = new ArrayList<Integer>();
+		
+		for ( int i = 0; i < documentTokens.size(); i++ ) {
+			DNAToken token = documentTokens.get(i);
+			if (token.getLabel().equals("Actor")) {
+				actorTokensIndices.add(i);
+			}
+			else if(token.getLabel().equals("Concept")) {
+				conceptTokensIndices.add(i);
+			}
+		}
+		
+		if ( actorTokensIndices.size() > 0 && conceptTokensIndices.size() > 0 ) {
+			for ( int actorTokenIndex : actorTokensIndices ) {
+				SparseVector actorTokenVec = windowVectors.get(actorTokenIndex);
+				Set<Integer> links = new HashSet<Integer>();
+				for ( int conceptTokenIndex : conceptTokensIndices ) {
+					SparseVector conceptTokenVec = windowVectors.get(conceptTokenIndex);
+					SparseVector concatinatedVec = actorTokenVec.getACopy();
+					concatinatedVec.addAll(conceptTokenVec);
+					
+					double distanceFeature = 
+							Math.abs( 
+									documentTokens.get(actorTokenIndex).getStart_position() -
+									documentTokens.get(conceptTokenIndex).getStart_position()
+							);
+					concatinatedVec.add(distanceFeature);
+					
+					String classValue = clf.classifyInstance(concatinatedVec);
+					
+					if ( classValue.equals(clf.POSITIVE_CLASS) ) {
+						links.add(conceptTokenIndex);
+					}
+				}
+				
+				if (  links.size() > 0 ) {
+					acLinks.put(actorTokenIndex, links);
+				}
+			}
+			
+		}
+		
+		return acLinks;
 	}
 
 	/**
