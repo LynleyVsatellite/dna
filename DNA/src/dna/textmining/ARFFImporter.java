@@ -92,6 +92,11 @@ public class ARFFImporter {
 		
 		return dataset;
 	}
+	
+	public SimpleDataset asSimpleDataset() {
+		SparseDataset sparseDataset = asSparseDataset();
+		return new SimpleDataset(sparseDataset.getX(), sparseDataset.getY());
+	}
 
 }
 

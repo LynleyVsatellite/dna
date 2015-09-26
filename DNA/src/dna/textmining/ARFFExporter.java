@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import dna.features.SparseVector;
+
 /**
  * A class to export a sparse dataset into the ARFF file format.
  * It exports all feature vectors in the sparse ARFF format. 
@@ -37,12 +39,22 @@ public class ARFFExporter {
 		
 	}
 	
+	public ARFFExporter(String filename, SparseDataset dataset) {
+		this(filename, dataset.getX().get(0).size());
+		for ( int i = 0; i < dataset.getX().size(); i++ ) {
+			SparseVector vec = dataset.getX().get(i);
+			double label = dataset.getY()[i];
+			append(vec.toArray(), label);
+		}
+		close();
+	}
+	
 	/**
 	 * Appends a feature vector to the ARFF file. Call this method for every feature vector.
 	 * @param array the feature vector
 	 * @param label the class label (1.0 for positive and 0.0 for negative). 
 	 */
-	public void append(double[] array, int label) {
+	public void append(double[] array, double label) {
 		try {
 			bw.write( "{" );
 			for ( int i = 0; i < array.length; i++ ) {

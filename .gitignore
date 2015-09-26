@@ -1,2 +1,8 @@
 /bin
 /target/
+.classpath
+.tagger
+.props
+.DS_Store
+.jar
+.gitignore

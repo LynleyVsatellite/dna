@@ -40,7 +40,7 @@ public class ActorConceptLinker {
 		LAMLClassifier lamlClf = new LAMLClassifier(lamlOrigClf);
 		
 		ActorConceptLinker acLinker = new ActorConceptLinker(files, features, lamlClf, 0, 
-				0.6, 0.2, 0.2, 0, true, true);
+				0.6, 0.2, 0.2, 0, true, true, true);
 		acLinker.train();
 		acLinker.test();
 		System.out.println( "+++ Done +++" );
@@ -57,7 +57,10 @@ public class ActorConceptLinker {
 	private DNAClassifier clf;
 	private boolean addATNegatives;
 	private boolean addTTNegatives;
-	
+	private boolean createDataset;
+	private SimpleDataset trainDataset;
+	private SimpleDataset testDataset;
+	private SimpleDataset valiDataset;
 
 	/**
 	 * 
@@ -70,10 +73,14 @@ public class ActorConceptLinker {
 	 * @param testSetSize the size of the testing dataset.
 	 * @param validationSetSize the size of the validation dataset.
 	 * @param seed the seed to be used when sampling the dna files while creating the datasets.
+	 * @param addATNegatives should the Actor-Token negative samples be used?
+	 * @param addTTNegatives should the Token-Token negative samples be used?
+	 * @param createDataset should the dataset be created from scratch or just an existing one from disk?
 	 */
 	public ActorConceptLinker(List<String> dnaFiles, List<DNAFeature> features, DNAClassifier classifier,
 			int windowSize, double trainSetSize, double testSetSize, 
-			double validationSetSize, int seed, boolean addATNegatives, boolean addTTNegatives) {
+			double validationSetSize, int seed, boolean addATNegatives, boolean addTTNegatives,
+			boolean createDataset) {
 
 		this.dnaFiles = dnaFiles;
 		this.features = features;
@@ -86,34 +93,69 @@ public class ActorConceptLinker {
 						testSetSize, validationSetSize, seed);
 
 		this.acDataProcessor = new ActorConceptDataPreprocessor(new StanfordDNATokenizer());
-		List<File> files = new ArrayList<File>();
-		for ( String filePath : dnaFiles ) {
-			files.add( new File( filePath ) );
+
+		String trainDatasetFileName = "ActorConceptTrainDS.csv";
+		String testDatasetFileName = "ActorConceptTestDS.csv";
+		String valiDatasetFileName = "ActorConceptValDS.csv";
+		
+		if (createDataset) {
+			
+			List<File> files = new ArrayList<File>();
+			for ( String filePath : dnaFiles ) {
+				files.add( new File( filePath ) );
+			}
+			
+			System.out.println( "Generalizing the DNA files for the ActorConcept Linker" );
+			this.acMapper = acDataProcessor.generalizeData(files);
+			System.out.println( "Done generalizing the DNA files." );
+	
+			//Getting all the tokens in the collections to be able to generate the features
+			//using the FeatureFactory
+			List<DNAToken> allTokens = new ArrayList<DNAToken>();
+			for ( int docID : acMapper.getFromDocIdToDocTokens().keySet() ) {
+				List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docID);
+				allTokens.addAll(docTokens);
+			}
+			featureFactory = new FeatureFactory(allTokens, features, trainTestValDocsIds);
+	
+			//Building the feature vectors for the tokens.
+			featureFactory.generateFeatures(allTokens);//The commented code does the same task
+			//but I didn't remove it because I'm not yet sure why I did it that way.
+			//TODO Maybe generateFeatures() should be called at a doc level or so. To be checked later.
+	//		for ( Integer docId : acMapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
+	//			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docId);
+	//			featureFactory.generateFeatures(docTokens);
+	//
+	//		}
+		
+			this.trainDataset = 
+					getSamples(trainTestValDocsIds.get("train"), addATNegatives, addTTNegatives);
+			this.testDataset = 
+					getSamples(trainTestValDocsIds.get("test"), addATNegatives, addTTNegatives);
+			this.valiDataset = 
+					getSamples(trainTestValDocsIds.get("validate"), addATNegatives, addTTNegatives);
+			
+			ARFFExporter trainDatasetExporter = 
+					new ARFFExporter(trainDatasetFileName, this.trainDataset);
+			ARFFExporter testDatasetExporter = 
+					new ARFFExporter(testDatasetFileName, this.testDataset);
+			ARFFExporter valDatasetExporter = 
+					new ARFFExporter(valiDatasetFileName, this.valiDataset);
 		}
-
-		System.out.println( "Generalizing the DNA files for the ActorConcept Linker" );
-		this.acMapper = acDataProcessor.generalizeData(files);
-		System.out.println( "Done generalizing the DNA files." );
-
-		//Getting all the tokens in the collections to be able to generate the features
-		//using the FeatureFactory
-		List<DNAToken> allTokens = new ArrayList<DNAToken>();
-		for ( int docID : acMapper.getFromDocIdToDocTokens().keySet() ) {
-			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docID);
-			allTokens.addAll(docTokens);
+		else {
+			ARFFImporter trainDatasetImporter = 
+					new ARFFImporter(trainDatasetFileName);
+			this.trainDataset = trainDatasetImporter.asSimpleDataset();
+			
+			ARFFImporter testDatasetImporter = 
+					new ARFFImporter(testDatasetFileName);
+			this.testDataset = 
+					testDatasetImporter.asSimpleDataset();
+			
+			ARFFImporter valiDatasetImporter = 
+					new ARFFImporter(valiDatasetFileName);
+			this.valiDataset = valiDatasetImporter.asSimpleDataset();
 		}
-		featureFactory = new FeatureFactory(allTokens, features, trainTestValDocsIds);
-
-		//Building the feature vectors for the tokens.
-		featureFactory.generateFeatures(allTokens);//The commented code does the same task
-		//but I didn't remove it because I'm not yet sure why I did it that way.
-		//TODO Maybe generateFeatures() should be called at a doc level or so. To be checked later.
-//		for ( Integer docId : acMapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
-//			List<DNAToken> docTokens = acMapper.getFromDocIdToDocTokens().get(docId);
-//			featureFactory.generateFeatures(docTokens);
-//
-//		}
-
 	}
 
 	/**
@@ -132,8 +174,8 @@ public class ActorConceptLinker {
 	 * Trains the classifier using the generated training dataset.
 	 */
 	public void train() {
+		SimpleDataset trainDataset = this.trainDataset;
 		
-		SimpleDataset trainDataset = getSamples(trainTestValDocsIds.get("train"), addATNegatives, addTTNegatives);
 		List<SparseVector> X = trainDataset.getX();
 		double[] y = trainDataset.getY();
 		
@@ -158,7 +200,8 @@ public class ActorConceptLinker {
 	 * Tests the classifier using the test dataset.
 	 */
 	public void test() {
-		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("test"), addATNegatives, addTTNegatives);
+		SimpleDataset simpleDataset = this.testDataset;
+		
 		List<SparseVector> X = simpleDataset.getX();
 		double[] y_test = simpleDataset.getY();
 		double[] preds = new double[ y_test.length ];
@@ -183,7 +226,8 @@ public class ActorConceptLinker {
 	 * Validates the classifier using the validation dataset.
 	 */
 	public void validate() {
-		SimpleDataset simpleDataset = getSamples(trainTestValDocsIds.get("validate"), addATNegatives, addTTNegatives);
+		SimpleDataset simpleDataset = this.valiDataset;
+		
 		List<SparseVector> X = simpleDataset.getX();
 		double[] y_test = simpleDataset.getY();
 		double[] preds = new double[ y_test.length ];
