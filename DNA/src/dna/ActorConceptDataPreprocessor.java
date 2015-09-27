@@ -29,19 +29,20 @@ public class ActorConceptDataPreprocessor {
 		ActorConceptMapper mapper = acDataProcessor.generalizeData(files);
 		
 		System.out.println("END");
-//		for ( Integer docId : mapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
-//			List<DNAToken> docTokens = mapper.getFromDocIdToDocTokens().get(docId);
-//			Map<Integer, Set<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
-//			for ( int actorTokenIndex : acLinks.keySet() ) {
-//				System.out.println( "Actor: " + docTokens.get(actorTokenIndex) );
-//				System.out.println( "Linked to the following concept tokens:" );
-//				for( int conceptTokenIndex : acLinks.get(actorTokenIndex) ) {
-//					System.out.print("[" + docTokens.get(conceptTokenIndex) + "]");
-//				}
-//				System.out.println("\n");
-//			}
-//			
-//		}
+		for ( Integer docId : mapper.getFromDocIdToActorsConceptsLinks().keySet() ) {
+			System.out.println("DocID" + docId);
+			List<DNAToken> docTokens = mapper.getFromDocIdToDocTokens().get(docId);
+			Map<Integer, Set<Integer>> acLinks = mapper.getFromDocIdToActorsConceptsLinks().get(docId);
+			for ( int actorTokenIndex : acLinks.keySet() ) {
+				System.out.println( "Actor: " + docTokens.get(actorTokenIndex) );
+				System.out.println( "Linked to the following concept tokens:" );
+				for( int conceptTokenIndex : acLinks.get(actorTokenIndex) ) {
+					System.out.print("[" + docTokens.get(conceptTokenIndex) + "]");
+				}
+				System.out.println("\n");
+			}
+			
+		}
 		
 	}
 	
@@ -71,33 +72,26 @@ public class ActorConceptDataPreprocessor {
 		ActorConceptMapper acMapper = new ActorConceptMapper();
 		Map<Integer, List<DNAToken>> fromDocIdToDocTokens = new HashMap<Integer, List<DNAToken>>();
 		acMapper.setFromDocIdToDocTokens(fromDocIdToDocTokens);
-		
+		int internalDocID = 0;
 		for ( File file : files ) {
 			DataAccess dataAccess = new DataAccess("sqlite", file.getAbsolutePath() );
 			List<Document> documentsList = dataAccess.getDocuments();
 			
-			for ( int c = 0; c < documentsList.size(); c++ ) {
+			for ( Document document : documentsList ) {
 				Map<Integer, Set<Integer>> actorConceptLinks = new
 						HashMap<Integer, Set<Integer>>();
-				acMapper.getFromDocIdToActorsConceptsLinks().put(c, actorConceptLinks);
-				Document document = documentsList.get(c);
+				acMapper.getFromDocIdToActorsConceptsLinks().put(internalDocID, actorConceptLinks);
 				String docString = document.getText();
 				List<DNAToken> docTokens = tokenzier.tokenize(0, docString);
 				
-				for (DNAToken docToken : docTokens) {
-					docToken.setInternalDocId(c);
+				for (int i = 0; i < docTokens.size(); i++) {
+					DNAToken docToken = docTokens.get(i);
+					docToken.setInternalDocId(internalDocID);
+					docToken.setIndex(i);
 				}
 				
 				DNATextMiner.giveLabels(docTokens, "Normal");
-				fromDocIdToDocTokens.put( c, docTokens );
-				//The purpose of the next hash table is to map from a token's start position
-				//in the document's text to the token's index in the docTokens list.
-				Map<Integer, Integer> fromTokenStartPostitionToTokenIndex = new
-						HashMap<Integer, Integer>();
-				for ( int j = 0; j < docTokens.size(); j++ ) {
-					DNAToken token = docTokens.get(j);
-					fromTokenStartPostitionToTokenIndex.put(token.getStart_position(), j);
-				}
+				fromDocIdToDocTokens.put( internalDocID, docTokens );
 				
 				List<SidebarStatement> approvedStatements = new ArrayList<SidebarStatement>();
 				List<SidebarStatement> actorStatements = new ArrayList<SidebarStatement>();
@@ -122,6 +116,16 @@ public class ActorConceptDataPreprocessor {
 				removeInnerStatements(actorStatements);
 				removeInnerStatements(conceptStatements);
 				
+				Map<SidebarStatement, Set<SidebarStatement>> fromActorStatementToConceptStatements = 
+						new HashMap<SidebarStatement, Set<SidebarStatement>>();
+				Map<Integer, Set<SidebarStatement>> fromActorTokenIndexToConceptStatements = 
+						new HashMap<Integer, Set<SidebarStatement>>();
+				
+				List<SidebarStatement> allApprovedStatementsActors = new
+						ArrayList<SidebarStatement>();
+				List<SidebarStatement> allApprovedStatementsConcepts = 
+						new ArrayList<SidebarStatement>();
+				
 				//Find the actors and concepts within each ApprovedStatement
 				for ( SidebarStatement approvedStatement : approvedStatements ) {
 					List<SidebarStatement> approvedStatementActors = new ArrayList<SidebarStatement>();
@@ -140,128 +144,76 @@ public class ActorConceptDataPreprocessor {
 						}
 					}
 					
-					//Tokenize the ApprovedStatement's text and label the tokens as either Actor, Concept,
-					//or Normal. Of course, only do that to an ApprovedStatement that has at least one actor
-					//and one concept.
-					//
-					//Yes I'm aware that the following approach is unnecessary complicated,
-					//since we have the Actor's and Concept's statements positions and we can use 
-					//String.substring() method, but I need this approach (for a possible usage in the future)
-					//to find the unhighlighted parts in the ApprovedStatement itself. 
 					if ( approvedStatementActors.size() > 0 && approvedStatementConcepts.size() > 0 ) {
-						Map<Integer, Integer> actorsPositions = new HashMap<Integer, Integer>();
-						Map<Integer, Integer> conceptsPositions = new HashMap<Integer, Integer>();
-						Map<Integer, Integer> nonHighlightedTextPositions = new HashMap<Integer, Integer>();
-						
-						//Put the positions of the actors in a hashtable to be able to find their tokens
-						for ( SidebarStatement statement : approvedStatementActors ) {
-							actorsPositions.put(statement.getStart(), statement.getStop());
-						}
-						
-						//Put the positions of the concepts in a hashtable to be able to find their tokens
-						for ( SidebarStatement statement : approvedStatementConcepts ) {
-							conceptsPositions.put(statement.getStart(), statement.getStop());
-						}
-						
-						//Find which part of the ApprovedStatement's text is Actor, Concept or Normal.
-						List<Integer> highlightedTextStartPositions = new ArrayList<Integer>();
-						highlightedTextStartPositions.addAll( actorsPositions.keySet() );
-						highlightedTextStartPositions.addAll( conceptsPositions.keySet() );
-						Collections.sort( highlightedTextStartPositions );
-						
-						for ( int i = 0; i < highlightedTextStartPositions.size(); i++ ) {
-							int startPosition = highlightedTextStartPositions.get(i);
-							int endPosition;
-							if ( actorsPositions.containsKey(startPosition) ) {
-								endPosition = actorsPositions.get(startPosition);
+						for ( SidebarStatement approvedStatementActor : approvedStatementActors ) {
+							fromActorStatementToConceptStatements.put(approvedStatementActor, 
+									new HashSet<SidebarStatement>());
+							
+							for ( SidebarStatement approvedStatementConcept : approvedStatementConcepts ) {
+								fromActorStatementToConceptStatements
+									.get(approvedStatementActor).add(approvedStatementConcept);
 							}
-							else {
-								endPosition = conceptsPositions.get(startPosition);
-							}
-							
-							int subsequentStartPosition = 0;
-							//Check for the last non-highlighted part in the statement.
-							if ( i == highlightedTextStartPositions.size() - 1 ) {
-								subsequentStartPosition = approvedStatement.getStop();
-							} 
-							else {
-								subsequentStartPosition	= highlightedTextStartPositions.get(i+1);
-							}
-							
-							//Avoids overlapped actors statements from different types
-							//E.g. Org inside Person. 
-							if ( subsequentStartPosition > endPosition  ) {
-								nonHighlightedTextPositions.put(endPosition, subsequentStartPosition);
-							}
-							
 						}
 						
-						//Check for the part before the first highlighted text segment
-						if ( highlightedTextStartPositions.get(0) != approvedStatement.getStart() ) {
-							int nonHighlightedTextStartPosition = approvedStatement.getStart();
-							int nonHighlightedTextEndPosition = highlightedTextStartPositions.get(0);
-							nonHighlightedTextPositions.put(nonHighlightedTextStartPosition, nonHighlightedTextEndPosition);
-						}
-						
-						//Tokenization 
-						List<DNAToken> statementTokens = new ArrayList<DNAToken>();
-						for ( Integer start : actorsPositions.keySet() ) {
-							int end = actorsPositions.get(start);
-							
-							List<DNAToken> temp_tokens = tokenzier.tokenize(start,
-									docString.substring(start, end));
-							DNATextMiner.giveLabels(temp_tokens, "Actor");
-							for ( DNAToken actorToken : temp_tokens ) {
-								int tokenIndex = fromTokenStartPostitionToTokenIndex.get( 
-													actorToken.getStart_position() );
-								actorConceptLinks.put( tokenIndex, new HashSet<Integer>() );
-							}
-							statementTokens.addAll(temp_tokens);
-							
-						}
-						
-						
-						
-						for ( Integer start : conceptsPositions.keySet() ) {
-							int end = conceptsPositions.get(start);
-							
-							List<DNAToken> temp_tokens = tokenzier.tokenize(start,
-									docString.substring(start, end));
-							DNATextMiner.giveLabels(temp_tokens, "Concept");
-							
-							//links each actor token in this ApprovedStatement to every
-							//concept token in this ApprovedStatement.
-							for ( DNAToken conceptToken : temp_tokens ) {
-								int conceptTokenIndex = fromTokenStartPostitionToTokenIndex.get( 
-										conceptToken.getStart_position() );
-								for ( Integer actorTokenIndex : actorConceptLinks.keySet() ) {
-									Set<Integer> conceptTokensIndices = actorConceptLinks.get(actorTokenIndex);
-									conceptTokensIndices.add(conceptTokenIndex);
-								}
-							}
-							
-							statementTokens.addAll(temp_tokens);
-						}
-						
-						for ( Integer start : nonHighlightedTextPositions.keySet() ) {
-							int end = nonHighlightedTextPositions.get(start);
-							List<DNAToken> temp_tokens = tokenzier.tokenize(start,
-									docString.substring(start, end));
-							
-							DNATextMiner.giveLabels(temp_tokens, "Normal");
-							statementTokens.addAll(temp_tokens);
-						}
-						
-						for ( DNAToken token : statementTokens ) {
-							int tokenIndex = fromTokenStartPostitionToTokenIndex.get( token.getStart_position() );
-							docTokens.get(tokenIndex).setLabel(token.getLabel());
-						}
-						
-//						acMapper.getFromDocIdToActorsConceptsLinks().put(c, actorConceptLinks);
+						allApprovedStatementsActors.addAll(approvedStatementActors);
+						allApprovedStatementsConcepts.addAll(approvedStatementConcepts);
 					}
-				}
-			}
-		}
+					
+				}//for each approved statement
+				
+				List<Integer> actorTokensIndices = new ArrayList<Integer>();
+				List<Integer> conceptTokensIndices = new ArrayList<Integer>();
+				
+				//Mark doc tokens as either Actor or Concept
+				for (int i = 0; i < docTokens.size(); i++) {
+					DNAToken docToken = docTokens.get(i);
+					
+					for ( SidebarStatement approvedStatementActor : allApprovedStatementsActors ) {
+						if ( docToken.getStart_position() >= approvedStatementActor.getStart() &&
+							 docToken.getEnd_position() <= approvedStatementActor.getStop() ) {
+							docToken.setLabel("Actor");
+							Set<SidebarStatement> actorConcepts = 
+									fromActorStatementToConceptStatements.get(approvedStatementActor);
+							fromActorTokenIndexToConceptStatements.put(docToken.getIndex(), actorConcepts);
+							actorTokensIndices.add(docToken.getIndex());
+						}
+					}
+					
+					for ( SidebarStatement approvedStatementConcept : allApprovedStatementsConcepts ) {
+						if ( docToken.getStart_position() >= approvedStatementConcept.getStart() &&
+							 docToken.getEnd_position() <= approvedStatementConcept.getStop() ) {
+							if(docToken.getLabel().equals("Actor")) {
+								throw new RuntimeException("The doc token was set previosuly as an Actor token!");
+							}
+							else {
+								docToken.setLabel("Concept");
+								conceptTokensIndices.add(docToken.getIndex());
+							}
+						}
+					}
+				}//for each doc token
+				
+				//Construct the actor-concept links
+				for ( int actorTokenIndex : actorTokensIndices ) {
+					actorConceptLinks.put(actorTokenIndex, new HashSet<Integer>());
+					Set<SidebarStatement> actorConcepts = 
+							fromActorTokenIndexToConceptStatements.get(actorTokenIndex);
+					
+					for( int conceptTokenIndex : conceptTokensIndices ) {
+						DNAToken conceptToken = docTokens.get(conceptTokenIndex);
+						for ( SidebarStatement actorConceptStatement : actorConcepts ) {
+							if ( conceptToken.getStart_position() >= actorConceptStatement.getStart() &&
+							 conceptToken.getEnd_position() <= actorConceptStatement.getStop() ) {
+								actorConceptLinks.get(actorTokenIndex).add(conceptTokenIndex);
+							}
+						}
+					}
+				}//for each actor token index
+				
+				System.out.println("procced doc: " + internalDocID);
+				internalDocID++;
+			}//for each document
+		}//for each file
 		
 		
 		return acMapper;
